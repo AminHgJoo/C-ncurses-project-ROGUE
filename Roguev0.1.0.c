@@ -3,7 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <time.h>
-
+#include <locale.h>
 
 int ROW,COLUMN;
 int GLOBAL_IS_GUEST=0;
@@ -19,6 +19,8 @@ int VALIDATE_EMAIL(char[]);
 void PRE_GAME_MENU();
 
 int main() {
+
+    setlocale(LC_ALL, "");
 
     srand(time(NULL));
 
@@ -558,6 +560,16 @@ int USER_LOGIN() {
             GLOBAL_IS_GUEST=TRUE;
 
             strcpy(GLOBAL_LOGGED_IN_USER,"Guest");
+
+            CLEAR_TEXT_FOR_LOGIN_ERRORS();
+
+            RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
+
+            mvprintw(ROW/3 +3 ,COLUMN/2 -26,"Temporary Login Successful. Press a Key to Continue.");
+
+            refresh();
+
+            getch();
 
             return 1;
 
