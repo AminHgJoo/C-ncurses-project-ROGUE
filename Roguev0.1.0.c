@@ -103,7 +103,7 @@ int main() {
 
     PRE_GAME_MENU();
 
-    POINT MAP[4][38][144];    //4 floors, each floor has 38 rows and 144 columns . struct map is defined for easier track of exploration
+    POINT MAP[4][38][144];    //4 floors, each floor has 38 rows and 144 columns . struct point is defined for easier tracking of exploration
 
     if(GLOBAL_LOAD_SAVE==TRUE) {//load from save onto MAP
 
@@ -1326,7 +1326,11 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
     int X_START=rand()%27;
     int Y_START=rand()%9+1;
     int BIG_OR_SMALL=rand()%2;
+
     if(BIG_OR_SMALL==1) {
+        int door1=rand()%14+X_START+1;
+
+        int door2=rand()%5+Y_START+1;
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1345,8 +1349,17 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+15].SYMBOL='+';
+
+        FLOOR[Y_START+6][door1].SYMBOL='+';
     }
     else {
+
+        int door1=rand()%11+X_START+1;
+
+        int door2=rand()%4+Y_START+1;
+
 
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1365,12 +1378,23 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START+5][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+12].SYMBOL='+';
+
+        FLOOR[Y_START+5][door1].SYMBOL='+';
     }
 
     X_START=rand()%27+48;
     Y_START=rand()%9+1;
     BIG_OR_SMALL=rand()%2;
+
     if(BIG_OR_SMALL==1) {
+
+        int door1=rand()%14+X_START+1;
+
+        int door2=rand()%5+Y_START+1;
+
+        int door3=rand()%5+Y_START+1;
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1389,8 +1413,20 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+15].SYMBOL='+';
+
+        FLOOR[Y_START+6][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
     }
     else {
+
+        int door1=rand()%11+X_START+1;
+
+        int door2=rand()%4+Y_START+1;
+
+        int door3=rand()%4+Y_START+1;
 
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1409,11 +1445,24 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START+5][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+12].SYMBOL='+';
+
+        FLOOR[Y_START+5][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
+
     }
+    
     X_START=rand()%27+96;
     Y_START=rand()%9+1;
     BIG_OR_SMALL=rand()%2;
+
     if(BIG_OR_SMALL==1) {
+
+        int door1=rand()%14+X_START+1;
+
+        int door3=rand()%5+Y_START+1;
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1432,8 +1481,16 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        FLOOR[Y_START+6][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
     }
     else {
+
+        int door1=rand()%11+X_START+1;
+
+        int door3=rand()%4+Y_START+1;
 
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1452,6 +1509,13 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START+5][i].SYMBOL='_';
         }
+
+
+        FLOOR[Y_START+5][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
+
+
     }
 
     X_START=rand()%27;
@@ -1459,6 +1523,11 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
     BIG_OR_SMALL=rand()%2;
     if(BIG_OR_SMALL==1) {
 
+        int door1=rand()%14+X_START+1;
+
+        int door2=rand()%5+Y_START+1;
+
+
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
         }
@@ -1476,8 +1545,17 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+15].SYMBOL='+';
+
+        FLOOR[Y_START][door1].SYMBOL='+';
+
     }
     else {
+
+        int door1=rand()%11+X_START+1;
+
+        int door2=rand()%4+Y_START+1;
 
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1496,6 +1574,11 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START+5][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+12].SYMBOL='+';
+
+        FLOOR[Y_START][door1].SYMBOL='+';
+
     }
 
     X_START=rand()%27+48;
@@ -1504,6 +1587,12 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
 
     if(BIG_OR_SMALL==1) {
 
+        int door1=rand()%14+X_START+1;
+
+        int door2=rand()%5+Y_START+1;
+
+        int door3=rand()%5+Y_START+1;
+
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
         }
@@ -1521,8 +1610,20 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+15].SYMBOL='+';
+
+        FLOOR[Y_START][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
     }
     else {
+        
+        int door1=rand()%11+X_START+1;
+
+        int door2=rand()%4+Y_START+1;
+
+        int door3=rand()%4+Y_START+1;
 
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1541,6 +1642,12 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START+5][i].SYMBOL='_';
         }
+
+        FLOOR[door2][X_START+12].SYMBOL='+';
+
+        FLOOR[Y_START][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
     }
 
     X_START=rand()%27+96;
@@ -1549,6 +1656,10 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
 
     if(BIG_OR_SMALL==1) {
 
+        int door1=rand()%14+X_START+1;
+
+        int door3=rand()%5+Y_START+1;
+
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
         }
@@ -1566,8 +1677,17 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        FLOOR[Y_START][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
+
     }
     else {
+
+        int door1=rand()%11+X_START+1;
+
+        int door3=rand()%4+Y_START+1;
 
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1586,5 +1706,13 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         for(int i=X_START ; i<X_START+13 ; i++) {
             FLOOR[Y_START+5][i].SYMBOL='_';
         }
+
+        FLOOR[Y_START][door1].SYMBOL='+';
+
+        FLOOR[door3][X_START].SYMBOL='+';
+
     }
+
+
+
 }
