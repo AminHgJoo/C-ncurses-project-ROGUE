@@ -6,23 +6,33 @@
 #include <locale.h>
 
 typedef struct point {
-    int x;
 
-    int y;
+    char SYMBOL;
+
+    int IS_DISCOVERED;
 
 } POINT;
 
+typedef struct settings {
+
+    char HERO_COLOR;
+
+    char MUSIC[50];
+
+    char DIFFICULTY;
+
+} SETTINGS;
 
 
 
 
 
-
-
+SETTINGS GLOBAL_GUEST_SETTINGS;
 int GLOBAL_LOAD_SAVE=FALSE;
 int ROW,COLUMN;
 int GLOBAL_IS_GUEST=0;
 char GLOBAL_LOGGED_IN_USER[100];
+void HANDLE_GUEST_USER();
 char GAME_STARTUP_MENU();
 void USER_REGISTERATION();
 void HANDLE_NEXT_MENUS(char);
@@ -35,6 +45,21 @@ void PRE_GAME_MENU();
 void PRINT_PREGAME_MENU();
 void OPEN_LEADERBOARDS();
 void OPEN_SETTINGS();
+void PRINT_SETTINGS_MENU();
+void OPEN_MUSIC_MENU();
+void OPEN_DIFFICULTY_MENU();
+void OPEN_HERO_COLOR_MENU();
+void PRINT_COLOR_GUI();
+
+
+
+
+void LOAD_MAP(POINT [4][38][144]);
+
+void GENERATE_MAP(POINT [4][38][144]);
+
+void GENERATE_FLOOR_SKELETON(POINT [38][144]);
+
 
 
 int main() {
@@ -57,11 +82,15 @@ int main() {
 
         start_color();
 
-        init_pair(1,COLOR_YELLOW,COLOR_BLACK);
+        init_pair(1,COLOR_YELLOW,COLOR_BLACK); init_pair(2,COLOR_WHITE,COLOR_YELLOW);
 
-        init_pair(2,COLOR_WHITE,COLOR_YELLOW);
+        init_pair(3,COLOR_RED,COLOR_BLACK); init_pair(8,COLOR_WHITE,COLOR_RED);
 
-        init_pair(3,COLOR_RED,COLOR_BLACK);
+        init_pair(4,COLOR_GREEN,COLOR_BLACK); init_pair(9,COLOR_WHITE,COLOR_GREEN);
+
+        init_pair(5,COLOR_BLUE,COLOR_BLACK); init_pair(10,COLOR_WHITE,COLOR_BLUE);
+
+        init_pair(6,COLOR_WHITE,COLOR_BLACK); init_pair(11,COLOR_BLACK,COLOR_WHITE);
 
         //add colors later
     }
@@ -70,20 +99,34 @@ int main() {
 
     HANDLE_NEXT_MENUS(NEXT_MENU);
 
+    HANDLE_GUEST_USER();
+
     PRE_GAME_MENU();
 
-    if(GLOBAL_LOAD_SAVE==TRUE) {//load from save
+    POINT MAP[4][38][144];    //4 floors, each floor has 38 rows and 144 columns . struct map is defined for easier track of exploration
 
-        
+    if(GLOBAL_LOAD_SAVE==TRUE) {//load from save onto MAP
 
-    }
-    else {//create new game
-
-
+        LOAD_MAP(MAP);
 
     }
+    else {//create new map from scratch
+
+        GENERATE_MAP(MAP);
+
+    }
+
+    while(TRUE) {//game loop
 
 
+
+
+
+
+
+
+
+    }
 
 
 
@@ -519,9 +562,21 @@ void USER_REGISTERATION() {
 
     FILE *SCOREBOARD=fopen("user_scores.txt","a+");
 
-    fprintf(SCOREBOARD,"%s %d\n",USERNAME,0);
+    fprintf(SCOREBOARD,"%s %d %d %d %d\n",USERNAME,0,0,0,0);
 
     fclose(SCOREBOARD);
+
+    FILE *SETTINGS=fopen("user_settings.txt","a+");
+
+    fprintf(SETTINGS,"%s w default n\n",USERNAME);
+
+    fclose(SETTINGS);
+
+    FILE *SAVES=fopen("user_saves_and_inventory.txt","a+");
+
+    fprintf(SAVES,"%s f\n",USERNAME);
+
+    fclose(SAVES);
 
     noecho();
 
@@ -947,19 +1002,589 @@ void PRINT_PREGAME_MENU() {
 
     mvprintw(ROW-1,COLUMN/2 - 22,"Press e or E to Select and Arrow keys to Move");
 
+    mvprintw(0,0,"Welcome %s!",GLOBAL_LOGGED_IN_USER);
+
     move(ROW/5,COLUMN/2 -4);
 
     attroff(COLOR_PAIR(1));
 
     refresh();
 }
-void OPEN_LEADERBOARDS() {
-
+void OPEN_LEADERBOARDS() {//print and sort scores. if user is guest do not search for their ranking
     
+    if(GLOBAL_IS_GUEST==TRUE) {
+
+
+    }
+
+    else {
+
+
+
+
+    }    
 
 }
 void OPEN_SETTINGS() {
 
+    PRINT_SETTINGS_MENU();
+
+    while(TRUE) {
+
+    int INPUT=getch();
+
+    int x,y;
+
+    getyx(stdscr,y,x);
+
+    if(y==ROW/5) {
+
+        if(INPUT==KEY_DOWN) {
+
+            attron(COLOR_PAIR(1));
+
+            mvprintw(ROW/5,COLUMN/2 - 5 ,"Difficulty");
+
+            attroff(COLOR_PAIR(1));
+
+            attron(COLOR_PAIR(2) | A_BLINK);
+
+            mvprintw(2*ROW/5,COLUMN/2 -5  ,"Hero Color");
+
+            attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+            refresh();
+
+        }
+        else if(INPUT=='e' || INPUT=='E') {
+            
+            OPEN_DIFFICULTY_MENU();
+
+            PRINT_SETTINGS_MENU();
+
+        }
+    }
+    else if(y==2*ROW/5) {
+
+        if(INPUT==KEY_DOWN) {
+
+            attron(COLOR_PAIR(1));
+
+            mvprintw(2*ROW/5,COLUMN/2 -5  ,"Hero Color");
+
+            attroff(COLOR_PAIR(1));
+
+            attron(COLOR_PAIR(2) | A_BLINK);
+
+            mvprintw(3*ROW/5 , COLUMN/2 - 3 ,"Music");
+
+            attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+            refresh();
+
+        }
+        else if(INPUT==KEY_UP) {
+
+            attron(COLOR_PAIR(1));
+
+            mvprintw(2*ROW/5,COLUMN/2 -5  ,"Hero Color");
+
+            attroff(COLOR_PAIR(1));
+
+            attron(COLOR_PAIR(2) | A_BLINK);
+
+            mvprintw(ROW/5,COLUMN/2 - 5 ,"Difficulty");
+
+            attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+            refresh();
+
+        }
+        else if(INPUT=='e' || INPUT=='E') {
+
+            OPEN_HERO_COLOR_MENU();
+
+            PRINT_SETTINGS_MENU();
+        }
+    }
+
+    else if(y==3*ROW/5) {
+
+        if(INPUT==KEY_DOWN) {
+
+            attron(COLOR_PAIR(1));
+
+            mvprintw(3*ROW/5 , COLUMN/2 - 3 ,"Music");
+
+            attroff(COLOR_PAIR(1));
+
+            attron(COLOR_PAIR(2) | A_BLINK);
+
+            mvprintw(4*ROW/5 , COLUMN/2 - 2 ,"Back");
+
+            attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+            refresh();
+        }
+
+        else if(INPUT==KEY_UP) {
+
+            attron(COLOR_PAIR(1));
+
+            mvprintw(3*ROW/5 , COLUMN/2 - 3 ,"Music");
+
+            attroff(COLOR_PAIR(1));
+
+            attron(COLOR_PAIR(2) | A_BLINK);
+
+            mvprintw(2*ROW/5,COLUMN/2 -5  ,"Hero Color");           
+
+            attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+            refresh();
+        }
+
+        else if(INPUT=='e' || INPUT=='E') {
+
+            OPEN_MUSIC_MENU();
+
+            PRINT_SETTINGS_MENU();
+
+        }
+    }
+    else {
+        
+        if(INPUT==KEY_UP) {
+
+            attron(COLOR_PAIR(1));
+
+            mvprintw(4*ROW/5 , COLUMN/2 - 2 ,"Back");
+
+            attroff(COLOR_PAIR(1));
+
+            attron(COLOR_PAIR(2) | A_BLINK);
+
+            mvprintw(3*ROW/5 , COLUMN/2 - 3 ,"Music");
+
+            attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+            refresh();
+
+        }
+        else if(INPUT=='e' || INPUT=='E') {
+            
+            break;
+
+        }
+    }
+
+    }
+}
+void PRINT_SETTINGS_MENU() {
+
+    clear();
+
+    attron(COLOR_PAIR(1));
+
+    mvprintw(0,0,"Welcome %s!",GLOBAL_LOGGED_IN_USER);
+
+    mvprintw(2*ROW/5,COLUMN/2 -5  ,"Hero Color");
+
+    mvprintw(3*ROW/5 , COLUMN/2 - 3 ,"Music");
+
+    mvprintw(4*ROW/5 , COLUMN/2 - 2 ,"Back");
+
+    mvprintw(ROW-1,COLUMN/2 - 22,"Press e or E to Select and Arrow keys to Move");
+
+    attroff(COLOR_PAIR(1));
+
+    attron(COLOR_PAIR(2) | A_BLINK);
+
+    mvprintw(ROW/5,COLUMN/2 - 5 ,"Difficulty");
+
+    attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+    refresh();
+
+}
+void OPEN_MUSIC_MENU() {//
+    if(GLOBAL_IS_GUEST==TRUE) {
+
+    }
+
+    else {
+        
+    }
+}
+void OPEN_DIFFICULTY_MENU() {//
+    if(GLOBAL_IS_GUEST==TRUE) {
+
+    }
+
+    else {
+
+    }
+}
+void OPEN_HERO_COLOR_MENU() {//
+    
+    PRINT_COLOR_GUI();
+
+    if(GLOBAL_IS_GUEST==TRUE) {
 
 
+
+
+
+
+    }
+
+    else {
+        
+
+
+
+
+    }
+
+
+
+
+
+
+
+}
+void HANDLE_GUEST_USER() {
+
+    if(GLOBAL_IS_GUEST==TRUE) {
+
+        GLOBAL_GUEST_SETTINGS.DIFFICULTY='n';
+
+        GLOBAL_GUEST_SETTINGS.HERO_COLOR='w';
+
+        strcpy(GLOBAL_GUEST_SETTINGS.MUSIC,"DEFAULT");
+
+    }
+
+}
+void PRINT_COLOR_GUI() {
+
+    clear();
+
+    attron(COLOR_PAIR(3));
+
+    mvprintw(2*ROW/5, COLUMN/2 -2 ,"Red");
+
+    attroff(COLOR_PAIR(3));
+
+    attron(COLOR_PAIR(4));
+
+    mvprintw(3*ROW/5,COLUMN/2 -3,"Green");
+
+    attroff(COLOR_PAIR(4));
+
+    attron(COLOR_PAIR(5));
+
+    mvprintw(4*ROW/5, COLUMN/2 -2,"Blue");
+
+    attroff(COLOR_PAIR(5));
+
+    attron(COLOR_PAIR(1));
+
+    mvprintw(ROW-1,COLUMN/2 - 22,"Press e or E to Select and Arrow keys to Move");
+
+    attroff(COLOR_PAIR(1));
+
+    attron(COLOR_PAIR(11) | A_BLINK);
+
+    mvprintw(ROW/5,COLUMN/2 -3 ,"White");
+
+    attroff(COLOR_PAIR(11)); attroff(A_BLINK);
+
+    refresh();
+
+}
+void LOAD_MAP(POINT MAP[4][38][144]) {//
+
+}
+void GENERATE_MAP(POINT MAP[4][38][144]) {
+
+    
+
+
+}
+
+void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
+
+    for(int i=0 ; i<38 ; i++) {
+        for(int j=0 ; j<144 ; j++) {
+            FLOOR[i][j].IS_DISCOVERED=0;
+
+            FLOOR[i][j].SYMBOL=' ';
+        }
+    }
+    
+    int X_START=rand()%27;
+    int Y_START=rand()%9+1;
+    int BIG_OR_SMALL=rand()%2;
+    if(BIG_OR_SMALL==1) {
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+5 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+15 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+15].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+    }
+    else {
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+4 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+12 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+12].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START+5][i].SYMBOL='_';
+        }
+    }
+
+    X_START=rand()%27+48;
+    Y_START=rand()%9+1;
+    BIG_OR_SMALL=rand()%2;
+    if(BIG_OR_SMALL==1) {
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+5 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+15 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+15].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+    }
+    else {
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+4 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+12 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+12].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START+5][i].SYMBOL='_';
+        }
+    }
+    X_START=rand()%27+96;
+    Y_START=rand()%9+1;
+    BIG_OR_SMALL=rand()%2;
+    if(BIG_OR_SMALL==1) {
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+5 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+15 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+15].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+    }
+    else {
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+4 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+12 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+12].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START+5][i].SYMBOL='_';
+        }
+    }
+
+    X_START=rand()%27;
+    Y_START=rand()%9+20;
+    BIG_OR_SMALL=rand()%2;
+    if(BIG_OR_SMALL==1) {
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+5 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+15 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+15].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+    }
+    else {
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+4 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+12 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+12].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START+5][i].SYMBOL='_';
+        }
+    }
+
+    X_START=rand()%27+48;
+    Y_START=rand()%9+20;
+    BIG_OR_SMALL=rand()%2;
+
+    if(BIG_OR_SMALL==1) {
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+5 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+15 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+15].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+    }
+    else {
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+4 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+12 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+12].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START+5][i].SYMBOL='_';
+        }
+    }
+
+    X_START=rand()%27+96;
+    Y_START=rand()%9+20;
+    BIG_OR_SMALL=rand()%2;
+
+    if(BIG_OR_SMALL==1) {
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+5 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+15 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+15].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+16 ; i++) {
+            FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+    }
+    else {
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START][i].SYMBOL='_';
+        }
+
+        for(int j=Y_START+1 ; j<=Y_START+4 ; j++) {
+            FLOOR[j][X_START].SYMBOL='|';
+            for(int i=X_START+1 ; i<X_START+12 ; i++) {
+
+                FLOOR[j][i].SYMBOL='.';
+
+            }
+            FLOOR[j][X_START+12].SYMBOL='|';
+        }
+
+        for(int i=X_START ; i<X_START+13 ; i++) {
+            FLOOR[Y_START+5][i].SYMBOL='_';
+        }
+    }
 }
