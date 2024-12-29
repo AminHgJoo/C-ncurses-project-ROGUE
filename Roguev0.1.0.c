@@ -5,6 +5,21 @@
 #include <time.h>
 #include <locale.h>
 
+typedef struct point {
+    int x;
+
+    int y;
+
+} POINT;
+
+
+
+
+
+
+
+
+int GLOBAL_LOAD_SAVE=FALSE;
 int ROW,COLUMN;
 int GLOBAL_IS_GUEST=0;
 char GLOBAL_LOGGED_IN_USER[100];
@@ -17,6 +32,10 @@ void RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
 void GENERATE_RANDOM_PASSWORD(char[]);
 int VALIDATE_EMAIL(char[]);
 void PRE_GAME_MENU();
+void PRINT_PREGAME_MENU();
+void OPEN_LEADERBOARDS();
+void OPEN_SETTINGS();
+
 
 int main() {
 
@@ -53,9 +72,16 @@ int main() {
 
     PRE_GAME_MENU();
 
+    if(GLOBAL_LOAD_SAVE==TRUE) {//load from save
+
+        
+
+    }
+    else {//create new game
 
 
 
+    }
 
 
 
@@ -738,7 +764,201 @@ int VALIDATE_EMAIL(char EMAIL[]) {
 }
 void PRE_GAME_MENU() {
 
+    PRINT_PREGAME_MENU();
+
+    while(TRUE) {
+
+        int INPUT=getch();
+
+        int x,y;
+
+        getyx(stdscr,y,x);
+
+        if(y==ROW/5) {
+
+            if(INPUT==KEY_DOWN) {
+
+                attron(COLOR_PAIR(1));
+
+                mvprintw(ROW/5,COLUMN/2 -4,"New Game");
+
+                attroff(COLOR_PAIR(1));
+
+                attron(COLOR_PAIR(2) | A_BLINK);
+
+                mvprintw(2*ROW/5,COLUMN/2 -7,"Load Last Save");
+
+                attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+                refresh();
+
+            }
+
+            else if(INPUT=='e' || INPUT=='E') {
+
+                break;
+
+            }
+        }
+
+        else if(y==2*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(COLOR_PAIR(1));
+
+                mvprintw(2*ROW/5,COLUMN/2 -7,"Load Last Save");
+
+                attroff(COLOR_PAIR(1));
+
+                attron(COLOR_PAIR(2) |A_BLINK);
+
+                mvprintw(ROW/5,COLUMN/2 -4,"New Game");
+
+                attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(COLOR_PAIR(1));
+
+                mvprintw(2*ROW/5,COLUMN/2 -7,"Load Last Save");
+
+                attroff(COLOR_PAIR(1));
+
+                attron(COLOR_PAIR(2) |A_BLINK);
+
+                mvprintw(3* ROW/5, COLUMN/2 -6,"Leaderboards");
+
+                attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+
+                GLOBAL_LOAD_SAVE=TRUE;
+
+                break;
+
+            }
+
+        }
+
+        else if(y==3* ROW/5) {
+            
+            if(INPUT==KEY_UP) {
+
+                attron(COLOR_PAIR(1));
+
+                mvprintw(3* ROW/5, COLUMN/2 -6,"Leaderboards");
+
+                attroff(COLOR_PAIR(1));
+
+                attron(COLOR_PAIR(2) |A_BLINK);
+
+                mvprintw(2*ROW/5,COLUMN/2 -7,"Load Last Save");
+
+                attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+                refresh();
+            }
+
+            else if(INPUT==KEY_DOWN) {
+
+                attron(COLOR_PAIR(1));
+
+                mvprintw(3* ROW/5, COLUMN/2 -6,"Leaderboards");
+
+                attroff(COLOR_PAIR(1));
+
+                attron(COLOR_PAIR(2) |A_BLINK);
+
+                mvprintw(4*ROW/5 , COLUMN/2 -4,"Settings");
+
+                attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+                refresh();
+            }
+
+            else if(INPUT=='e' || INPUT=='E') {//open leaderboards and then refresh the page once you are back
+
+                OPEN_LEADERBOARDS();
+                
+                PRINT_PREGAME_MENU();
+
+            }
+        }
+
+        else {//4/5 row
+
+            if(INPUT==KEY_UP) {
+
+                attron(COLOR_PAIR(1));
+
+                mvprintw(4*ROW/5 , COLUMN/2 -4,"Settings");
+
+                attroff(COLOR_PAIR(1));
+
+                attron(COLOR_PAIR(2) | A_BLINK);
+
+                mvprintw(3* ROW/5, COLUMN/2 -6,"Leaderboards");
+
+                attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+                refresh();
+
+            }
+
+            else if(INPUT=='e' || INPUT=='E') {
+
+                OPEN_SETTINGS();
+
+                PRINT_PREGAME_MENU();
+
+            }
+        }
+
+    }
+
+}
+void PRINT_PREGAME_MENU() {
     clear();
+
+    noecho();
+
+    curs_set(0);
+
+    attron(COLOR_PAIR(2) | A_BLINK);
+
+    mvprintw(ROW/5,COLUMN/2 -4,"New Game");
+
+    attroff(COLOR_PAIR(2)); attroff(A_BLINK);
+
+    attron(COLOR_PAIR(1));
+
+    mvprintw(2*ROW/5,COLUMN/2 -7,"Load Last Save");
+
+    mvprintw(3* ROW/5, COLUMN/2 -6,"Leaderboards");
+
+    mvprintw(4*ROW/5 , COLUMN/2 -4,"Settings");
+
+    mvprintw(ROW-1,COLUMN/2 - 22,"Press e or E to Select and Arrow keys to Move");
+
+    move(ROW/5,COLUMN/2 -4);
+
+    attroff(COLOR_PAIR(1));
+
+    refresh();
+}
+void OPEN_LEADERBOARDS() {
+
+    
+
+}
+void OPEN_SETTINGS() {
 
 
 
