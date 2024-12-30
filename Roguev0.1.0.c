@@ -9,6 +9,8 @@ typedef struct point {
 
     char SYMBOL;
 
+    char REAL_CONTENTS;
+
     int IS_DISCOVERED;
 
 } POINT;
@@ -23,6 +25,21 @@ typedef struct settings {
 
 } SETTINGS;
 
+typedef struct door {
+
+    int x;
+
+    int y;
+
+    int SECTOR;
+
+    char DIRECTION;
+
+} DOOR;
+
+
+
+
 
 
 
@@ -32,6 +49,8 @@ int GLOBAL_LOAD_SAVE=FALSE;
 int ROW,COLUMN;
 int GLOBAL_IS_GUEST=0;
 char GLOBAL_LOGGED_IN_USER[100];
+
+
 void HANDLE_GUEST_USER();
 char GAME_STARTUP_MENU();
 void USER_REGISTERATION();
@@ -59,6 +78,8 @@ void LOAD_MAP(POINT [4][38][144]);
 void GENERATE_MAP(POINT [4][38][144]);
 
 void GENERATE_FLOOR_SKELETON(POINT [38][144]);
+
+void CONNECT_ROOMS(POINT [38][144]);
 
 
 
@@ -1306,17 +1327,19 @@ void PRINT_COLOR_GUI() {
 void LOAD_MAP(POINT MAP[4][38][144]) {//
 
 }
-void GENERATE_MAP(POINT MAP[4][38][144]) {
+void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
     
 
 
 }
 
-void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
+void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
     for(int i=0 ; i<38 ; i++) {
+
         for(int j=0 ; j<144 ; j++) {
+
             FLOOR[i][j].IS_DISCOVERED=0;
 
             FLOOR[i][j].SYMBOL=' ';
@@ -1712,6 +1735,323 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {
         FLOOR[door3][X_START].SYMBOL='+';
 
     }
+
+    //generate non-secret random features
+
+    CONNECT_ROOMS(FLOOR);
+
+    //end of non-secret gen
+
+    for(int i=0 ; i<38 ; i++) {
+        for(int j=0 ; j<144 ; j++) {
+            FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
+        }
+    }
+
+    //secret objects generation. change real contents but not symbol
+
+
+
+
+
+}
+
+void CONNECT_ROOMS(POINT FLOOR[38][144]) {
+
+    DOOR ALL_DOORS[14];
+
+    int k=0;
+    //search the board for doors, mark their locations and sectors
+    for( int i=0 ; i<38 ; i++) {
+        for( int j=0 ; j<144 ; j++) {
+            if(FLOOR[i][j].SYMBOL=='+') {
+
+                ALL_DOORS[k].x=j;
+
+                ALL_DOORS[k].y=i;
+
+                if(i>=0 && i<19) {//sectors 1,2,3
+
+                    if(j>=0 && j<48) {
+
+                        ALL_DOORS[k].SECTOR=1;
+
+                    }
+
+                    if(j>=48 && j<96) {
+
+                        ALL_DOORS[k].SECTOR=2;
+
+                    }
+
+                    if(j>=96 && j<144) {
+
+                        ALL_DOORS[k].SECTOR=3;
+
+                    }
+
+                }
+
+                else {//sectors 4,5,6
+
+                    if(j>=0 && j<48) {
+
+                        ALL_DOORS[k].SECTOR=4;
+
+                    }
+
+                    if(j>=48 && j<96) {
+
+                        ALL_DOORS[k].SECTOR=5;
+
+                    }
+
+                    if(j>=96 && j<144) {
+
+                        ALL_DOORS[k].SECTOR=6;
+
+                    }
+
+                }
+
+                k++;
+
+            }
+        }
+    }
+
+    //determine the direction of the doors. for easier reference, sort them first (in terms of sector).
+
+    for(int i=0 ; i<14 ; i++) {
+        for(int j=i+1 ; j<14 ; j++) {
+            if(ALL_DOORS[i].SECTOR>ALL_DOORS[j].SECTOR) {
+                DOOR temp=ALL_DOORS[i];
+                ALL_DOORS[i]=ALL_DOORS[j];
+                ALL_DOORS[j]=temp;
+
+            }
+
+        }
+    }
+
+    //sector 1 has 2 doors :
+
+    if(ALL_DOORS[0].x>ALL_DOORS[1].x) {
+
+        ALL_DOORS[0].DIRECTION='r';
+
+        ALL_DOORS[1].DIRECTION='d';
+
+    }
+    else {
+        ALL_DOORS[1].DIRECTION='r';
+
+        ALL_DOORS[0].DIRECTION='d';
+    }
+
+    //sector 2 has 3 :
+
+    if(ALL_DOORS[2].y>ALL_DOORS[3].y && ALL_DOORS[2].y>ALL_DOORS[4].y) {
+
+        ALL_DOORS[2].DIRECTION='d';
+
+        if(ALL_DOORS[3].x>ALL_DOORS[4].x) {
+
+            ALL_DOORS[3].DIRECTION='r';
+
+            ALL_DOORS[4].DIRECTION='l';
+        }
+
+        else {
+            ALL_DOORS[4].DIRECTION='r';
+
+            ALL_DOORS[3].DIRECTION='l';
+        }
+
+
+    }
+
+    if(ALL_DOORS[3].y>ALL_DOORS[2].y && ALL_DOORS[3].y>ALL_DOORS[4].y) {
+
+        ALL_DOORS[3].DIRECTION='d';
+
+         if(ALL_DOORS[2].x>ALL_DOORS[4].x) {
+
+            ALL_DOORS[2].DIRECTION='r';
+
+            ALL_DOORS[4].DIRECTION='l';
+        }
+
+        else {
+            ALL_DOORS[4].DIRECTION='r';
+
+            ALL_DOORS[2].DIRECTION='l';
+        }
+
+    }
+
+    if(ALL_DOORS[4].y>ALL_DOORS[2].y && ALL_DOORS[4].y>ALL_DOORS[3].y) {
+
+        ALL_DOORS[4].DIRECTION='d';
+
+         if(ALL_DOORS[3].x>ALL_DOORS[2].x) {
+
+            ALL_DOORS[3].DIRECTION='r';
+
+            ALL_DOORS[2].DIRECTION='l';
+        }
+
+        else {
+            ALL_DOORS[2].DIRECTION='r';
+
+            ALL_DOORS[3].DIRECTION='l';
+        }
+
+    }
+
+    //sector 3 has 2:
+
+    if(ALL_DOORS[5].y>ALL_DOORS[6].y) {
+
+        ALL_DOORS[5].DIRECTION='d';
+
+        ALL_DOORS[6].DIRECTION='l';
+
+    }
+
+    else {
+
+        ALL_DOORS[6].DIRECTION='d';
+
+        ALL_DOORS[5].DIRECTION='l';
+
+    }
+
+    //sector 4 has 2
+
+    if(ALL_DOORS[7].x>ALL_DOORS[8].x) {
+
+        ALL_DOORS[7].DIRECTION='r';
+
+        ALL_DOORS[8].DIRECTION='u';
+
+    }
+    
+    else {
+
+        ALL_DOORS[8].DIRECTION='r';
+
+        ALL_DOORS[7].DIRECTION='u';
+
+    }
+
+    //sector 5 has 3
+
+    if(ALL_DOORS[9].y<ALL_DOORS[10].y && ALL_DOORS[9].y<ALL_DOORS[11].y) {
+
+        ALL_DOORS[9].DIRECTION='u';
+
+        if(ALL_DOORS[10].x>ALL_DOORS[11].x) {
+
+            ALL_DOORS[10].DIRECTION='r';
+
+            ALL_DOORS[11].DIRECTION='l';
+
+        }
+
+        else {
+
+            ALL_DOORS[11].DIRECTION='r';
+
+            ALL_DOORS[10].DIRECTION='l';
+
+        }
+
+    }
+
+    else if(ALL_DOORS[10].y<ALL_DOORS[9].y && ALL_DOORS[10].y<ALL_DOORS[11].y) {
+
+        ALL_DOORS[10].DIRECTION='u';
+
+        if(ALL_DOORS[9].x>ALL_DOORS[11].x) {
+
+            ALL_DOORS[9].DIRECTION='r';
+
+            ALL_DOORS[11].DIRECTION='l';
+
+        }
+
+        else {
+
+            ALL_DOORS[11].DIRECTION='r';
+
+            ALL_DOORS[9].DIRECTION='l';
+
+        }
+    }
+
+    else {
+
+        ALL_DOORS[11].DIRECTION='u';
+
+        if(ALL_DOORS[10].x>ALL_DOORS[9].x) {
+
+            ALL_DOORS[10].DIRECTION='r';
+
+            ALL_DOORS[9].DIRECTION='l';
+
+        }
+
+        else {
+
+            ALL_DOORS[9].DIRECTION='r';
+
+            ALL_DOORS[10].DIRECTION='l';
+
+        }
+    }
+
+    //sector 6 has 2
+
+    if(ALL_DOORS[12].y>ALL_DOORS[13].y) {
+
+        ALL_DOORS[12].DIRECTION='l';
+
+        ALL_DOORS[13].DIRECTION='u';
+
+    }
+
+    else {
+
+        ALL_DOORS[13].DIRECTION='l';
+
+        ALL_DOORS[12].DIRECTION='u';
+    }
+
+    //all doors now have been found and classified in terms of direction and sector. now to connect them.
+
+    //test :
+
+    /*for(int k=0 ; k<14 ; k++) {
+
+        int i=ALL_DOORS[k].y;
+
+        int j=ALL_DOORS[k].x;
+
+        FLOOR[i][j].SYMBOL=ALL_DOORS[k].DIRECTION;
+
+    }*/
+
+    //test end
+
+    
+
+
+
+
+
+
+
 
 
 
