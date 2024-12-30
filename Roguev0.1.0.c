@@ -14,6 +14,8 @@ typedef struct point {
 
     int IS_DISCOVERED;
 
+    int IS_START; //1 means start, -1 means end
+
 } POINT;
 
 typedef struct settings {
@@ -70,7 +72,7 @@ void OPEN_MUSIC_MENU();
 void OPEN_DIFFICULTY_MENU();
 void OPEN_HERO_COLOR_MENU();
 void PRINT_COLOR_GUI();
-
+int GIVE_SECTOR_NUMBER(int , int );
 
 
 
@@ -78,9 +80,13 @@ void LOAD_MAP(POINT [4][38][144]);
 
 void GENERATE_MAP(POINT [4][38][144]);
 
-void GENERATE_FLOOR_SKELETON(POINT [38][144]);
+void GENERATE_FLOOR_SKELETON(POINT [38][144], int , int);
 
 void CONNECT_ROOMS(POINT [38][144]);
+
+void GENERATE_PILLARS(POINT [38][144]);
+
+void GENERATE_ENTRY_EXIT( POINT [38][144], int , int);
 
 
 
@@ -137,6 +143,10 @@ int main() {
         GENERATE_MAP(MAP);
 
     }
+
+    int PLAYER_X_COORD;
+
+    int PLAYER_Y_COORD;
 
     while(TRUE) {//game loop
 
@@ -1335,7 +1345,7 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
 }
 
-void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
+void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int STARTX , int STARTY) {//
 
     for(int i=0 ; i<38 ; i++) {
 
@@ -1344,7 +1354,9 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
             FLOOR[i][j].IS_DISCOVERED=0;
 
             FLOOR[i][j].SYMBOL=' ';
+
         }
+
     }
     
     int X_START=rand()%27;
@@ -1355,6 +1367,8 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
         int door1=rand()%14+X_START+1;
 
         int door2=rand()%5+Y_START+1;
+
+        int WINDOW_QUERRY=rand()%100+1;
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1372,6 +1386,15 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+
+        if(WINDOW_QUERRY<=20) {
+            if(door1<X_START+14) {
+                FLOOR[Y_START+6][door1+1].SYMBOL='=';
+            }
+            else {
+                FLOOR[Y_START+6][door1-1].SYMBOL='=';
+            }
         }
 
         FLOOR[door2][X_START+15].SYMBOL='+';
@@ -1420,6 +1443,8 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         int door3=rand()%5+Y_START+1;
 
+        int WINDOW_QUERRY=rand()%100+1;
+
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
         }
@@ -1436,6 +1461,15 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+
+        if(WINDOW_QUERRY<=20) {
+            if(door1<X_START+14) {
+                FLOOR[Y_START+6][door1+1].SYMBOL='=';
+            }
+            else {
+                FLOOR[Y_START+6][door1-1].SYMBOL='=';
+            }
         }
 
         FLOOR[door2][X_START+15].SYMBOL='+';
@@ -1488,6 +1522,8 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         int door3=rand()%5+Y_START+1;
 
+        int WINDOW_QUERRY=rand()%100+1;
+
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
         }
@@ -1504,6 +1540,15 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+
+        if(WINDOW_QUERRY<=20) {
+            if(door1<X_START+14) {
+                FLOOR[Y_START+6][door1+1].SYMBOL='=';
+            }
+            else {
+                FLOOR[Y_START+6][door1-1].SYMBOL='=';
+            }
         }
 
         FLOOR[Y_START+6][door1].SYMBOL='+';
@@ -1551,6 +1596,7 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         int door2=rand()%5+Y_START+1;
 
+        int WINDOW_QUERRY=rand()%100+1;
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1568,6 +1614,15 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+
+        if(WINDOW_QUERRY<=20) {
+            if(door1<X_START+14) {
+                FLOOR[Y_START][door1+1].SYMBOL='=';
+            }
+            else {
+                FLOOR[Y_START][door1-1].SYMBOL='=';
+            }
         }
 
         FLOOR[door2][X_START+15].SYMBOL='+';
@@ -1617,6 +1672,8 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         int door3=rand()%5+Y_START+1;
 
+        int WINDOW_QUERRY=rand()%100+1;
+
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
         }
@@ -1634,6 +1691,16 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
         }
+
+        if(WINDOW_QUERRY<=20) {
+            if(door1<X_START+14) {
+                FLOOR[Y_START][door1+1].SYMBOL='=';
+            }
+            else {
+                FLOOR[Y_START][door1-1].SYMBOL='=';
+            }
+        }
+
 
         FLOOR[door2][X_START+15].SYMBOL='+';
 
@@ -1676,13 +1743,15 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
     X_START=rand()%27+96;
     Y_START=rand()%9+20;
-    BIG_OR_SMALL=rand()%2;
+    BIG_OR_SMALL=rand()%2; 
 
     if(BIG_OR_SMALL==1) {
 
         int door1=rand()%14+X_START+1;
 
         int door3=rand()%5+Y_START+1;
+
+        int WINDOW_QUERRY=rand()%100+1;
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START][i].SYMBOL='_';
@@ -1700,6 +1769,15 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
         for(int i=X_START ; i<X_START+16 ; i++) {
             FLOOR[Y_START+6][i].SYMBOL='_';
+        }
+
+        if(WINDOW_QUERRY<=20) {
+            if(door1<X_START+14) {
+                FLOOR[Y_START][door1+1].SYMBOL='=';
+            }
+            else {
+                FLOOR[Y_START][door1-1].SYMBOL='=';
+            }
         }
 
         FLOOR[Y_START][door1].SYMBOL='+';
@@ -1737,9 +1815,13 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
     }
 
-    //generate non-secret random features
+    //generate non-secret random features(doors, windows, password doors and stairs, ...)
 
     CONNECT_ROOMS(FLOOR);
+
+    GENERATE_ENTRY_EXIT(FLOOR,STARTX,STARTY);
+
+    GENERATE_PILLARS(FLOOR);
 
     //end of non-secret gen
 
@@ -1749,7 +1831,7 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
         }
     }
 
-    //secret objects generation. change real contents but not symbol
+    //secret door generation. change real contents but not symbol
 
 
 
@@ -1757,7 +1839,7 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144]) {//
 
 }
 
-void CONNECT_ROOMS(POINT FLOOR[38][144]) {
+void CONNECT_ROOMS(POINT FLOOR[38][144]) {/////////////////////////////////////
 
     DOOR ALL_DOORS[14];
 
@@ -2045,9 +2127,9 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     //test end
 
-    //1r -> 2l & 1d -> 4u | 2r ->3l & 2d -> 5u | 3d ->6u | 4r -> 5l | 5r -> 6l //
+    // 1r -> 2l & 1d -> 4u | 2r ->3l & 2d -> 5u | 3d ->6u | 4r -> 5l | 5r -> 6l //
 
-    for(int k=0 ; k<14 ; k++) {
+    for(int k=0 ; k<14 ; k++) {//hallway gen completed
 
         if(ALL_DOORS[k].SECTOR==1 && ALL_DOORS[k].DIRECTION=='r') {//1r
 
@@ -2318,6 +2400,9 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     }
 
+    //query for secret door
+
+    
 
 
 
@@ -2325,4 +2410,200 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
 
 
+
+
+
+}
+
+void GENERATE_PILLARS(POINT FLOOR[38][144]) {
+
+    for(int k=0 ; k<6 ; k++) {//only 2 pillars for each sector
+
+        int NUMBER=2;
+
+        for(int i=(k/3)*19 ; i<19+(k/3)*19 ; i++ ) {
+
+            for(int j=(k%3)*48; j<48+(k%3)*48 ;j++) {
+
+                if(FLOOR[i][j].SYMBOL=='.') {
+
+                    int CAN_BE_PUT=TRUE;
+
+                    if(NUMBER) {
+
+                        if(FLOOR[i][j-1].SYMBOL=='+' || FLOOR[i][j-1].SYMBOL=='=' || FLOOR[i][j-1].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i][j+1].SYMBOL=='+' || FLOOR[i][j+1].SYMBOL=='=' || FLOOR[i][j+1].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i-1][j].SYMBOL=='+' || FLOOR[i-1][j].SYMBOL=='=' || FLOOR[i-1][j].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i+1][j].SYMBOL=='+' || FLOOR[i+1][j].SYMBOL=='=' || FLOOR[i+1][j].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i-1][j-1].SYMBOL=='+' || FLOOR[i-1][j-1].SYMBOL=='=' || FLOOR[i-1][j-1].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i-1][j+1].SYMBOL=='+' || FLOOR[i-1][j+1].SYMBOL=='=' || FLOOR[i-1][j+1].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i+1][j-1].SYMBOL=='+' || FLOOR[i+1][j-1].SYMBOL=='=' || FLOOR[i+1][j-1].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+                        if(FLOOR[i+1][j+1].SYMBOL=='+' || FLOOR[i+1][j+1].SYMBOL=='=' || FLOOR[i+1][j+1].SYMBOL=='<')
+                            CAN_BE_PUT=FALSE;
+
+                    }
+
+                    int QUERRY=rand()%100+1;
+
+                    if(QUERRY<=3 && CAN_BE_PUT==TRUE && NUMBER>0)  {
+                        FLOOR[i][j].SYMBOL='O';
+                        NUMBER--;
+                    }
+                        
+
+                }
+                
+            
+
+
+            }
+
+        }
+    }
+
+}
+
+void GENERATE_ENTRY_EXIT(POINT FLOOR[38][144], int PREDETERMINED_START_X ,int PREDETERMINED_START_Y) {
+
+    //if passed on x,y are -1,-1 generate random start
+
+    int X_START;
+
+    int Y_START;
+
+    if(PREDETERMINED_START_X==-1 && PREDETERMINED_START_Y==-1)  {//random start
+
+        while(TRUE) {
+
+            X_START=rand()%144;
+
+            Y_START=rand()%38;
+
+            int IS_VALID=FALSE;
+
+            if(FLOOR[Y_START][X_START].SYMBOL=='.') {
+
+                IS_VALID=TRUE;
+
+                if(FLOOR[Y_START+1][X_START].SYMBOL=='=' || FLOOR[Y_START+1][X_START].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_START-1][X_START].SYMBOL=='=' || FLOOR[Y_START-1][X_START].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_START][X_START+1].SYMBOL=='=' || FLOOR[Y_START][X_START+1].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_START][X_START-1].SYMBOL=='=' || FLOOR[Y_START][X_START-1].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                
+            }
+
+            if(IS_VALID==TRUE) {
+                break;
+            }
+
+        }
+
+    }
+
+    else {
+
+        X_START=PREDETERMINED_START_X;
+
+        Y_START=PREDETERMINED_START_Y;
+
+    }
+
+    int PROHIBITED_EXIT_SECTOR=GIVE_SECTOR_NUMBER(X_START,Y_START);
+
+    int X_END;
+
+    int Y_END;
+
+    while(TRUE) {
+
+            X_END=rand()%144;
+
+            Y_END=rand()%38;
+
+            int IS_VALID=FALSE;
+
+            if(FLOOR[Y_END][X_END].SYMBOL=='.') {
+
+                IS_VALID=TRUE;
+
+                if(FLOOR[Y_END+1][X_END].SYMBOL=='=' || FLOOR[Y_END+1][X_END].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_END-1][X_END].SYMBOL=='=' || FLOOR[Y_END-1][X_END].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_END][X_END+1].SYMBOL=='=' || FLOOR[Y_END][X_END+1].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_END][X_END-1].SYMBOL=='=' || FLOOR[Y_END][X_END-1].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                
+            }
+
+            if(IS_VALID==TRUE && GIVE_SECTOR_NUMBER(X_END,Y_END)!=PROHIBITED_EXIT_SECTOR) {
+                break;
+            }
+
+    }
+
+    FLOOR[Y_START][X_START].IS_START=1;
+
+    FLOOR[Y_START][X_START].SYMBOL='<';
+
+    FLOOR[Y_END][X_END].IS_START=-1;
+
+    FLOOR[Y_END][X_END].SYMBOL='<';
+
+}
+
+int GIVE_SECTOR_NUMBER(int x, int y) {
+
+    if(y<19) {
+
+        if(x<48) {
+
+            return 1;
+        }
+        else if(x>=48 && x<96) {
+
+            return 2;
+
+        }
+        else {
+            return 3;
+        }
+    }
+
+    else {
+
+        if(x<48) {
+
+            return 4;
+
+        }
+        else if(x>=48 && x<96) {
+
+            return 5;
+        }
+        else {
+            return 6;
+        }
+
+    }
 }
