@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <time.h>
 #include <locale.h>
+#include <math.h>
 
 typedef struct point {
 
@@ -2032,7 +2033,7 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     //test :
 
-    /*for(int k=0 ; k<14 ; k++) {
+    /*  for(int k=0 ; k<14 ; k++) {
 
         int i=ALL_DOORS[k].y;
 
@@ -2040,13 +2041,282 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
         FLOOR[i][j].SYMBOL=ALL_DOORS[k].DIRECTION;
 
-    }*/
+        }   */
 
     //test end
 
-    
+    //1r -> 2l & 1d -> 4u | 2r ->3l & 2d -> 5u | 3d ->6u | 4r -> 5l | 5r -> 6l //
 
+    for(int k=0 ; k<14 ; k++) {
 
+        if(ALL_DOORS[k].SECTOR==1 && ALL_DOORS[k].DIRECTION=='r') {//1r
+
+            int i=ALL_DOORS[k].y;
+
+            int j=ALL_DOORS[k].x+1;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==2 && ALL_DOORS[l].DIRECTION=='l') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (i!=I_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(i<I_FINAL)
+                    i++;
+                else
+                    i--;
+            }
+
+            for(int l=j ; l<J_FINAL ; l++) {
+                FLOOR[i][l].SYMBOL='#';
+            }
+        }
+
+        if(ALL_DOORS[k].SECTOR==1 && ALL_DOORS[k].DIRECTION=='d') {//1d
+            int i=ALL_DOORS[k].y+1;
+
+            int j=ALL_DOORS[k].x;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==4 && ALL_DOORS[l].DIRECTION=='u') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (j!=J_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(j<J_FINAL)
+                    j++;
+                else
+                    j--;
+            }
+
+            for(int l=i ; l<I_FINAL ; l++) {
+                FLOOR[l][J_FINAL].SYMBOL='#';
+            }
+        }
+
+        if(ALL_DOORS[k].SECTOR==2 && ALL_DOORS[k].DIRECTION=='r') {//2r
+            int i=ALL_DOORS[k].y;
+
+            int j=ALL_DOORS[k].x+1;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==3 && ALL_DOORS[l].DIRECTION=='l') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (i!=I_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(i<I_FINAL)
+                    i++;
+                else
+                    i--;
+            }
+
+            for(int l=j ; l<J_FINAL ; l++) {
+                FLOOR[i][l].SYMBOL='#';
+            }
+        }
+
+        if(ALL_DOORS[k].SECTOR==2 && ALL_DOORS[k].DIRECTION=='d') {//2d
+            int i=ALL_DOORS[k].y+1;
+
+            int j=ALL_DOORS[k].x;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==5 && ALL_DOORS[l].DIRECTION=='u') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (j!=J_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(j<J_FINAL)
+                    j++;
+                else
+                    j--;
+            }
+
+            for(int l=i ; l<I_FINAL ; l++) {
+                FLOOR[l][j].SYMBOL='#';
+            }
+        }
+
+        if(ALL_DOORS[k].SECTOR==3 && ALL_DOORS[k].DIRECTION=='d') {//3d
+            int i=ALL_DOORS[k].y+1;
+
+            int j=ALL_DOORS[k].x;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==6 && ALL_DOORS[l].DIRECTION=='u') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (j!=J_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(j<J_FINAL)
+                    j++;
+                else
+                    j--;
+            }
+
+            for(int l=i ; l<I_FINAL ; l++) {
+                FLOOR[l][j].SYMBOL='#';
+            }
+        }
+
+        if(ALL_DOORS[k].SECTOR==4 && ALL_DOORS[k].DIRECTION=='r') {//4r
+            int i=ALL_DOORS[k].y;
+
+            int j=ALL_DOORS[k].x+1;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==5 && ALL_DOORS[l].DIRECTION=='l') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (i!=I_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(i<I_FINAL)
+                    i++;
+                else
+                    i--;
+            }
+
+            for(int l=j ; l<J_FINAL ; l++) {
+                FLOOR[i][l].SYMBOL='#';
+            }
+        }
+
+        if(ALL_DOORS[k].SECTOR==5 && ALL_DOORS[k].DIRECTION=='r') {//5r
+            int i=ALL_DOORS[k].y;
+
+            int j=ALL_DOORS[k].x+1;
+
+            int I_FINAL;
+
+            int J_FINAL;
+
+            for(int l=0 ; l<14 ; l++) {
+
+                if(ALL_DOORS[l].SECTOR==6 && ALL_DOORS[l].DIRECTION=='l') {
+
+                    I_FINAL=ALL_DOORS[l].y;
+
+                    J_FINAL=ALL_DOORS[l].x;
+
+                    break;
+
+                }
+
+            }
+
+            while (i!=I_FINAL) {
+
+                FLOOR[i][j].SYMBOL='#';
+
+                if(i<I_FINAL)
+                    i++;
+                else
+                    i--;
+            }
+
+            for(int l=j ; l<J_FINAL ; l++) {
+                FLOOR[i][l].SYMBOL='#';
+            }
+        }
+
+    }
 
 
 
