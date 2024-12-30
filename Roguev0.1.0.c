@@ -80,13 +80,13 @@ void LOAD_MAP(POINT [4][38][144]);
 
 void GENERATE_MAP(POINT [4][38][144]);
 
-void GENERATE_FLOOR_SKELETON(POINT [38][144], int , int);
+int GENERATE_FLOOR_SKELETON(POINT [38][144], int );
 
 void CONNECT_ROOMS(POINT [38][144]);
 
 void GENERATE_PILLARS(POINT [38][144]);
 
-void GENERATE_ENTRY_EXIT( POINT [38][144], int , int);
+int GENERATE_ENTRY_EXIT( POINT [38][144], int );
 
 
 
@@ -1340,12 +1340,18 @@ void LOAD_MAP(POINT MAP[4][38][144]) {//
 }
 void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
-    
+    int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1);
+
+    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[1],NEXT_START);
+
+    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[2],NEXT_START);
+
+    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[3],NEXT_START);
 
 
 }
 
-void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int STARTX , int STARTY) {//
+int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     for(int i=0 ; i<38 ; i++) {
 
@@ -1819,7 +1825,7 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int STARTX , int STARTY) {//
 
     CONNECT_ROOMS(FLOOR);
 
-    GENERATE_ENTRY_EXIT(FLOOR,STARTX,STARTY);
+    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);
 
     GENERATE_PILLARS(FLOOR);
 
@@ -1831,11 +1837,16 @@ void GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int STARTX , int STARTY) {//
         }
     }
 
-    //secret door generation. change real contents but not symbol
+    //secret door & trap generation. change real contents but not symbol
 
 
 
 
+
+
+
+
+    return TEMP;
 
 }
 
@@ -2400,7 +2411,7 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {/////////////////////////////////////
 
     }
 
-    //query for secret door
+    //query for secret door maybe ?
 
     
 
@@ -2470,15 +2481,15 @@ void GENERATE_PILLARS(POINT FLOOR[38][144]) {
 
 }
 
-void GENERATE_ENTRY_EXIT(POINT FLOOR[38][144], int PREDETERMINED_START_X ,int PREDETERMINED_START_Y) {
+int GENERATE_ENTRY_EXIT(POINT FLOOR[38][144], int PREDETERMINED_START_SECTOR ) {
 
-    //if passed on x,y are -1,-1 generate random start
+    //if passed on sector is -1, generate random start
 
     int X_START;
 
     int Y_START;
 
-    if(PREDETERMINED_START_X==-1 && PREDETERMINED_START_Y==-1)  {//random start
+    if(PREDETERMINED_START_SECTOR==-1)  {//random start
 
         while(TRUE) {
 
@@ -2517,9 +2528,38 @@ void GENERATE_ENTRY_EXIT(POINT FLOOR[38][144], int PREDETERMINED_START_X ,int PR
 
     else {
 
-        X_START=PREDETERMINED_START_X;
+        while(TRUE) {
 
-        Y_START=PREDETERMINED_START_Y;
+            X_START=rand()%144;
+
+            Y_START=rand()%38;
+
+            int IS_VALID=FALSE;
+
+            if(FLOOR[Y_START][X_START].SYMBOL=='.') {
+
+                IS_VALID=TRUE;
+
+                if(FLOOR[Y_START+1][X_START].SYMBOL=='=' || FLOOR[Y_START+1][X_START].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_START-1][X_START].SYMBOL=='=' || FLOOR[Y_START-1][X_START].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_START][X_START+1].SYMBOL=='=' || FLOOR[Y_START][X_START+1].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                if(FLOOR[Y_START][X_START-1].SYMBOL=='=' || FLOOR[Y_START][X_START-1].SYMBOL=='+') {
+                    IS_VALID=FALSE;
+                }
+                
+            }
+
+            if(IS_VALID==TRUE && GIVE_SECTOR_NUMBER(X_START,Y_START)==PREDETERMINED_START_SECTOR) {
+                break;
+            }
+
+        }
 
     }
 
@@ -2569,6 +2609,8 @@ void GENERATE_ENTRY_EXIT(POINT FLOOR[38][144], int PREDETERMINED_START_X ,int PR
     FLOOR[Y_END][X_END].IS_START=-1;
 
     FLOOR[Y_END][X_END].SYMBOL='<';
+
+    return GIVE_SECTOR_NUMBER(X_END,Y_END);
 
 }
 
