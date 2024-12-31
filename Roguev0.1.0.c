@@ -40,7 +40,13 @@ typedef struct door {
 
 } DOOR;
 
+typedef struct coords {
 
+    int x;
+
+    int y;
+
+}   COORDS;
 
 
 
@@ -52,6 +58,10 @@ int GLOBAL_LOAD_SAVE=FALSE;
 int ROW,COLUMN;
 int GLOBAL_IS_GUEST=0;
 char GLOBAL_LOGGED_IN_USER[100];
+
+int GLOBAL_PLAYER_X_COORD;
+
+int GLOBAL_PLAYER_Y_COORD;
 
 
 void HANDLE_GUEST_USER();
@@ -87,6 +97,10 @@ void CONNECT_ROOMS(POINT [38][144]);
 void GENERATE_PILLARS(POINT [38][144]);
 
 int GENERATE_ENTRY_EXIT( POINT [38][144], int );
+
+COORDS GIVE_STAIRS_ADDRESS_ENTRY(POINT [38][144]);
+
+COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT [38][144]);
 
 
 
@@ -135,7 +149,7 @@ int main() {
 
     if(GLOBAL_LOAD_SAVE==TRUE) {//load from save onto MAP
 
-        LOAD_MAP(MAP);
+        LOAD_MAP(MAP);//load map, exploration progress and player location onto global variables
 
     }
     else {//create new map from scratch
@@ -144,11 +158,9 @@ int main() {
 
     }
 
-    int PLAYER_X_COORD;
+    
 
-    int PLAYER_Y_COORD;
-
-    while(TRUE) {//game loop
+    //while(TRUE) {//game loop
 
 
 
@@ -158,7 +170,7 @@ int main() {
 
 
 
-    }
+    //}
 
 
 
@@ -1338,7 +1350,10 @@ void PRINT_COLOR_GUI() {
 void LOAD_MAP(POINT MAP[4][38][144]) {//
 
 }
+
 void GENERATE_MAP(POINT MAP[4][38][144]) {//
+
+    POINT *ENTRY_POINT, *EXIT_POINT;
 
     int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1);
 
@@ -1347,6 +1362,44 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
     NEXT_START=GENERATE_FLOOR_SKELETON(MAP[2],NEXT_START);
 
     NEXT_START=GENERATE_FLOOR_SKELETON(MAP[3],NEXT_START);
+
+    for(int i=0 ; i<38 ; i++) {//find and store game exit and start in 1st and 4th floors. Specify player start coords
+
+        for(int j=0 ; j<144 ; j++) {
+
+            if(MAP[0][i][j].IS_START==1) {
+
+                ENTRY_POINT=&MAP[0][i][j];
+
+                GLOBAL_PLAYER_X_COORD=j;
+
+                GLOBAL_PLAYER_Y_COORD=i;
+
+            }
+
+            if(MAP[3][i][j].IS_START==-1) {
+
+                EXIT_POINT=&MAP[3][i][j];
+
+            }
+
+        }
+    }
+
+    ENTRY_POINT->SYMBOL='H';
+
+    EXIT_POINT->SYMBOL='X';
+
+
+
+
+
+
+
+
+
+
+
 
 
 }
@@ -1823,11 +1876,11 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     //generate non-secret random features(doors, windows, password doors and stairs, ...)
 
-    CONNECT_ROOMS(FLOOR);
+    CONNECT_ROOMS(FLOOR);       //hallways doors and windows
 
-    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);
+    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   //GENERATE ENTRY/EXIT FOR DUNGEON
 
-    GENERATE_PILLARS(FLOOR);
+    GENERATE_PILLARS(FLOOR);    //fill pillars
 
     //end of non-secret gen
 
@@ -1837,7 +1890,70 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
         }
     }
 
-    //secret door & trap generation. change real contents but not symbol
+    //secret door & trap generation. change real contents but not symbol!
+
+    COORDS START_COORDS=GIVE_STAIRS_ADDRESS_ENTRY(FLOOR);
+
+    COORDS END_COORDS=GIVE_STAIRS_ADDRESS_EXIT(FLOOR);
+
+    int START_SECTOR=GIVE_SECTOR_NUMBER(START_COORDS.x,START_COORDS.y);
+
+    int END_SECTOR=GIVE_SECTOR_NUMBER(END_COORDS.x,END_COORDS.y);
+
+    //make end and start sectors not have secrets. but end may be password protected.
+
+    int RANDOM_QUERRY=rand()%100+1;
+
+    int SECRET_ROOM_SECTOR;
+
+    if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
+
+        while(TRUE) {
+
+            SECRET_ROOM_SECTOR=rand()%6+1;
+
+            if((SECRET_ROOM_SECTOR==1 || SECRET_ROOM_SECTOR==3 || SECRET_ROOM_SECTOR==4 || SECRET_ROOM_SECTOR==6 )
+
+            &&(SECRET_ROOM_SECTOR!=START_SECTOR)
+
+            &&(SECRET_ROOM_SECTOR!=END_SECTOR)) 
+
+            {//valid generation sector selected
+
+                break;
+
+            }
+
+        }
+
+        //turn regular doors' chars into walls and real insides into ?
+
+        for(int i=((SECRET_ROOM_SECTOR-1)/3)*19 ; i<19+((SECRET_ROOM_SECTOR-1)/3)*19 ; i++) {
+            for(int j=((SECRET_ROOM_SECTOR-1)%3)*48 ; j<((SECRET_ROOM_SECTOR-1)%3)*48+48 ; j++) {
+                if(FLOOR[i][j].SYMBOL=='+') {//door found. find its direction
+
+                    FLOOR[i][j].REAL_CONTENTS='?';
+
+                    if(FLOOR[i][j-1].SYMBOL=='_' && FLOOR[i][j+1].SYMBOL=='_') {//put horizontal wall
+                        FLOOR[i][j].SYMBOL='_';
+                    }
+
+                    else {//put vertical wall
+                        FLOOR[i][j].SYMBOL='|';
+                    }
+
+                }
+            }
+        }
+
+
+
+
+
+
+
+    }
+
 
 
 
@@ -1850,7 +1966,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
 }
 
-void CONNECT_ROOMS(POINT FLOOR[38][144]) {/////////////////////////////////////
+void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     DOOR ALL_DOORS[14];
 
@@ -2411,19 +2527,6 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {/////////////////////////////////////
 
     }
 
-    //query for secret door maybe ?
-
-    
-
-
-
-
-
-
-
-
-
-
 }
 
 void GENERATE_PILLARS(POINT FLOOR[38][144]) {
@@ -2647,5 +2750,43 @@ int GIVE_SECTOR_NUMBER(int x, int y) {
             return 6;
         }
 
+    }
+}
+
+COORDS GIVE_STAIRS_ADDRESS_ENTRY(POINT FLOOR[38][144]) {
+
+    for(int i=0 ; i<38 ; i++) {
+
+        for(int j=0 ; j<144 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='<' && FLOOR[i][j].IS_START==1) {
+
+                COORDS ANS;
+
+                ANS.x=j; ANS.y=i;
+
+                return ANS;
+
+            }
+        }
+    }
+}
+
+COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT FLOOR[38][144]) {
+
+    for(int i=0 ; i<38 ; i++) {
+        
+        for(int j=0 ; j<144 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='<' && FLOOR[i][j].IS_START==-1) {
+
+                COORDS ANS;
+
+                ANS.x=j; ANS.y=i;
+
+                return ANS;
+
+            }
+        }
     }
 }
