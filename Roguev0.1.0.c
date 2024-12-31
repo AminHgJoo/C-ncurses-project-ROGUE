@@ -28,9 +28,11 @@ typedef struct point {
                                                 
     /* -1:Δ     -2:⚒️      -3:🗡️     -4:🪄     -5:➳     -6: ⚔️  */ /*Gold : $ | Food : ~ */
 
-    int IS_DISCOVERED;
+    short IS_DISCOVERED;
 
-    int IS_START; //1 means start, -1 means end
+    char COLOR; //y: yellow/golden, r :red , b: blue , w: white ,g : green
+
+    short IS_START; //1 means start, -1 means end
 
 } POINT;
 
@@ -83,6 +85,10 @@ int GLOBAL_PLAYER_X_COORD;
 
 int GLOBAL_PLAYER_Y_COORD;
 
+int GLOBAL_PLAYER_FLOOR=0;  //note : floor numbers are the array index, actual floors are one higher
+
+int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_of_game exit, 3 is saved and quit
+
 
 void HANDLE_GUEST_USER();
 char GAME_STARTUP_MENU();
@@ -126,6 +132,29 @@ COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT [38][144]);
 int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
 
 void GENERATE_ANCIENT_KEY(POINT [38][144]);
+
+
+
+
+
+
+
+void HANDLE_USER_INPUT_AND_MOVE_HERO(char *,POINT [4][38][144]);
+
+int PROCESS_PLAYER_INPUT(int , int , int ,int, POINT [4][38][144], char *);
+
+void PRINT_MAP_ON_SCREEN(POINT [4][38][144]);
+
+
+
+
+
+
+
+
+
+
+
 
 
 int main() {
@@ -182,34 +211,50 @@ int main() {
 
     }
 
+    //determine max player HP based on difficulty
+
+
+    unsigned long long int START_TIME=time(NULL); //enable time-out delay below :
+
+    halfdelay(2); //0.2 sec delay
+
+    char TRANSITION_STORAGE='.'; //storage for swapping hero position and map objects
+
+
+
+
+    while(GLOBAL_EXIT_CODE==0) {//game loop
+
+    HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
+
+    //HANDLE BACKGROUND TIMERS.
+
+    PRINT_MAP_ON_SCREEN(MAP);
+
+
+
+    }
+
+
+
+
     
-
-
-    unsigned long long int START_TIME=time(NULL); 
-
-    //while(TRUE) {//game loop
-
-
-
-
-
-
-
-
-
-    //}
-
     unsigned long long int FINISH_TIME=time(NULL);
 
-    //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES.
+    //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES. 
+    //end halfdelay mode
+    cbreak();
 
+    clear();
 
+    attrset(A_NORMAL);
 
+    curs_set(0);
 
+    mvprintw(ROW/2,COLUMN/2 -24,"Hope You Had Fun! Press a Key to Close The Game.");
 
+    refresh();
 
-
-    
     getch();
 
     endwin();
@@ -1431,19 +1476,10 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
 
 
-
-
-
-
-
-
-
-
-
 }
 
-int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
-
+int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOOR ONLY
+    
     for(int i=0 ; i<38 ; i++) {
 
         for(int j=0 ; j<144 ; j++) {
@@ -1456,9 +1492,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     }
     
-    int X_START=rand()%27;
-    int Y_START=rand()%9+1;
-    int BIG_OR_SMALL=rand()%2;
+    int X_START=rand()%27;  int Y_START=rand()%9+1; int BIG_OR_SMALL=rand()%2;
 
     if(BIG_OR_SMALL==1) {
         int door1=rand()%14+X_START+1;
@@ -1528,9 +1562,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
         FLOOR[Y_START+5][door1].SYMBOL='+';
     }
 
-    X_START=rand()%27+48;
-    Y_START=rand()%9+1;
-    BIG_OR_SMALL=rand()%2;
+    X_START=rand()%27+48;   Y_START=rand()%9+1; BIG_OR_SMALL=rand()%2;
 
     if(BIG_OR_SMALL==1) {
 
@@ -1609,9 +1641,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     }
     
-    X_START=rand()%27+96;
-    Y_START=rand()%9+1;
-    BIG_OR_SMALL=rand()%2;
+    X_START=rand()%27+96;   Y_START=rand()%9+1; BIG_OR_SMALL=rand()%2;
 
     if(BIG_OR_SMALL==1) {
 
@@ -1684,9 +1714,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     }
 
-    X_START=rand()%27;
-    Y_START=rand()%9+20;
-    BIG_OR_SMALL=rand()%2;
+    X_START=rand()%27;  Y_START=rand()%9+20;    BIG_OR_SMALL=rand()%2;
     if(BIG_OR_SMALL==1) {
 
         int door1=rand()%14+X_START+1;
@@ -1757,9 +1785,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     }
 
-    X_START=rand()%27+48;
-    Y_START=rand()%9+20;
-    BIG_OR_SMALL=rand()%2;
+    X_START=rand()%27+48;   Y_START=rand()%9+20;    BIG_OR_SMALL=rand()%2;
 
     if(BIG_OR_SMALL==1) {
 
@@ -1838,9 +1864,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
         FLOOR[door3][X_START].SYMBOL='+';
     }
 
-    X_START=rand()%27+96;
-    Y_START=rand()%9+20;
-    BIG_OR_SMALL=rand()%2; 
+    X_START=rand()%27+96;   Y_START=rand()%9+20;    BIG_OR_SMALL=rand()%2; 
 
     if(BIG_OR_SMALL==1) {
 
@@ -1918,20 +1942,20 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     CONNECT_ROOMS_AND_RETURN_DOORS(FLOOR,RETURN_DOORS);       //hallways doors and windows, and getting all doors.
 
-    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   //GENERATE ENTRY/EXIT FOR DUNGEON
+    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   //GENERATE ENTRY/EXIT FOR DUNGEON, RETURN EXIT SECTOR
 
     GENERATE_PILLARS(FLOOR);    //fill pillars
 
-    //generate pickups, items & themes
+    //generate pickups, items & themes!!!!!!
 
-    GENERATE_ANCIENT_KEY(FLOOR);
-
-
+    GENERATE_ANCIENT_KEY(FLOOR); //one ancient key per floor
 
 
 
 
-    //end of non-secret gen
+
+
+    //end of non-secret gen------------------------------------------------------------------------------------
 
     for(int i=0 ; i<38 ; i++) {
         for(int j=0 ; j<144 ; j++) { 
@@ -1939,21 +1963,15 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
         }
     }
 
-    //secret door & trap generation. change real contents but not symbol!
+    //secret door & trap generation. change real contents but not symbol!--------------------------------------------
 
-    COORDS START_COORDS=GIVE_STAIRS_ADDRESS_ENTRY(FLOOR);
+    COORDS START_COORDS=GIVE_STAIRS_ADDRESS_ENTRY(FLOOR);   COORDS END_COORDS=GIVE_STAIRS_ADDRESS_EXIT(FLOOR);
 
-    COORDS END_COORDS=GIVE_STAIRS_ADDRESS_EXIT(FLOOR);
-
-    int START_SECTOR_FOR_RNG=GIVE_SECTOR_NUMBER(START_COORDS.x,START_COORDS.y);
-
-    int END_SECTOR=GIVE_SECTOR_NUMBER(END_COORDS.x,END_COORDS.y);
+    int START_SECTOR_FOR_RNG=GIVE_SECTOR_NUMBER(START_COORDS.x,START_COORDS.y); int END_SECTOR=GIVE_SECTOR_NUMBER(END_COORDS.x,END_COORDS.y);
 
     //make end and start sectors not have secrets. but end may be password protected.
 
-    int RANDOM_QUERRY=rand()%100+1;
-
-    int SECRET_ROOM_SECTOR;
+    int RANDOM_QUERRY=rand()%100+1; int SECRET_ROOM_SECTOR;
 
     if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
 
@@ -2961,3 +2979,353 @@ void GENERATE_ANCIENT_KEY(POINT FLOOR[38][144]) {
 
 
 } 
+
+void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//
+
+    int USER_INPUT=getch();
+
+    int VALID;
+
+    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE) {
+
+        PROCESS_PLAYER_INPUT(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD,GLOBAL_PLAYER_FLOOR,USER_INPUT,MAP, TEMP_PTR);
+
+    }
+
+    else if(USER_INPUT==KEY_BACKSPACE) {//open pause menu
+
+        cbreak(); //if user chooses to quit, get appropriate exit code from pause menu function
+
+        //load pause menu
+
+        halfdelay(2);
+
+    }
+
+    //no input received. loop in main will go on
+
+
+
+
+}
+
+int PROCESS_PLAYER_INPUT(int CURRENT_X, int CURRENT_Y,int CURRENT_FLOOR ,int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {//
+
+    switch(USER_INPUT) //inventory and other stuff will be implemented later. //handle item pickups DIFFERENTLY
+    //movement with numpad added
+    {
+        case '8': {//up
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_Y--;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+
+            break;
+        }
+
+        case '6': {//right
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_X++;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+            break;
+        }
+
+        case '4': {//left
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_X--;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+            break;
+        }
+
+        case '2': {//down
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_Y++;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+            break;
+        }
+
+        case '9' : {// up right
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='|'
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_X++;    CURRENT_Y--;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+            break;
+        }
+
+        case '7' : {//up left
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y-1][CURRENT_X].SYMBOL!='|'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_X--;    CURRENT_Y--;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+        
+            break;
+        }
+
+        case '3' : {//down right
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X+1].SYMBOL!='|'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_X++;    CURRENT_Y++;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+            break;
+        }
+
+        case '1' : {//down left
+
+            if(MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y+1][CURRENT_X].SYMBOL!='|'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='=' 
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='@' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!=' '
+            
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='O'
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='_' 
+
+            && MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X-1].SYMBOL!='|'
+
+            ) {
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL=*TEMP_PTR;
+
+                CURRENT_Y++; CURRENT_X--;
+
+                *TEMP_PTR=MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL;
+
+                MAP[CURRENT_FLOOR][CURRENT_Y][CURRENT_X].SYMBOL='H';
+
+            }
+
+            break;
+        }
+
+
+
+
+
+    }
+
+
+
+
+
+
+
+
+}
+
+void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
+
+    clear();
+
+    attrset(A_NORMAL);
+
+    for(int i=0 ; i<38 ; i++) {
+
+        for(int j=0 ; j<144 ; j++) {
+            printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+        }
+
+    }
+
+    move(0,0);
+
+    refresh();
+
+}
