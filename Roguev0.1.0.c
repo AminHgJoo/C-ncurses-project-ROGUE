@@ -5,12 +5,28 @@
 #include <time.h>
 #include <locale.h>
 #include <math.h>
+#define RED_COLORED_CELL COLOR_PAIR(3)
+#define GREEN_COLORED_CELL COLOR_PAIR(4)
+#define GOLD_COLORED_CELL COLOR_PAIR(1)
+#define BLUE_COLORED_CELL COLOR_PAIR(5)
+#define WHITE_COLORED_CELL COLOR_PAIR(6)
+#define GOLD_HIGHLIGHT COLOR_PAIR(2)
+#define RED_HIGHLIGHT COLOR_PAIR(8)
+#define GREEN_HIGHLIGHT COLOR_PAIR(9)
+#define BLUE_HIGHLIGHT COLOR_PAIR(10)
+#define WHITE_HIGHLIGHT COLOR_PAIR(11)
+
+
+
 
 typedef struct point {
 
     char SYMBOL;
 
-    char REAL_CONTENTS;
+    char REAL_CONTENTS; //conventions for unicode characters !!!!!!!!! to not get confused with genuine chars, negative ASCII values 
+                                                    //will be recognized as potential unicode conventions.
+                                                
+    /* -1:Δ     -2:⚒️      -3:🗡️     -4:🪄     -5:➳     -6: ⚔️  */ /*Gold : $ | Food : ~ */
 
     int IS_DISCOVERED;
 
@@ -109,6 +125,8 @@ COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT [38][144]);
 
 int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
 
+void GENERATE_ANCIENT_KEY(POINT [38][144]);
+
 
 int main() {
 
@@ -166,6 +184,9 @@ int main() {
 
     
 
+
+    unsigned long long int START_TIME=time(NULL); 
+
     //while(TRUE) {//game loop
 
 
@@ -177,6 +198,13 @@ int main() {
 
 
     //}
+
+    unsigned long long int FINISH_TIME=time(NULL);
+
+    //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES.
+
+
+
 
 
 
@@ -1396,7 +1424,9 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
     ENTRY_POINT->REAL_CONTENTS='.';
 
-    EXIT_POINT->SYMBOL='X';
+    EXIT_POINT->SYMBOL='X';                         
+
+    
 
 
 
@@ -1892,10 +1922,19 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     GENERATE_PILLARS(FLOOR);    //fill pillars
 
+    //generate pickups, items & themes
+
+    GENERATE_ANCIENT_KEY(FLOOR);
+
+
+
+
+
+
     //end of non-secret gen
 
     for(int i=0 ; i<38 ; i++) {
-        for(int j=0 ; j<144 ; j++) { //<<<<------------ maybe import somewhere else ?
+        for(int j=0 ; j<144 ; j++) { 
             FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
         }
     }
@@ -2900,3 +2939,25 @@ int FIND_SPECIFIED_DOOR(char WANTED_DIRECTION,  int WANTED_SECTOR, DOOR ALL_DOOR
     }
 
 }
+
+void GENERATE_ANCIENT_KEY(POINT FLOOR[38][144]) {
+
+    int RAND_X;
+
+    int RAND_Y;
+
+    while(TRUE) {
+
+        RAND_X=rand()%144;
+
+        RAND_Y=rand()%38;
+
+        if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.') {
+
+            FLOOR[RAND_Y][RAND_X].SYMBOL=-1; // Ancient Key Convention
+
+        }
+    }
+
+
+} 
