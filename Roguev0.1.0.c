@@ -28,11 +28,11 @@ typedef struct point {
                                                 
     /* -1:Δ     -2:⚒️      -3:🗡️     -4:🪄     -5:➳     -6: ⚔️  */ /*Gold : $ | Food : ~ */
 
-    short IS_DISCOVERED;
+    char IS_DISCOVERED;
 
     char COLOR; //y: yellow/golden, r :red , b: blue , w: white ,g : green
 
-    short IS_START; //1 means start, -1 means end
+    char IS_START; //1 means start, -1 means end
 
 } POINT;
 
@@ -99,7 +99,7 @@ void CLEAR_TEXT_FOR_LOGIN_ERRORS();
 void RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
 void GENERATE_RANDOM_PASSWORD(char[]);
 int VALIDATE_EMAIL(char[]);
-void PRE_GAME_MENU();
+int PRE_GAME_MENU();
 void PRINT_PREGAME_MENU();
 void OPEN_LEADERBOARDS();
 void OPEN_SETTINGS();
@@ -198,7 +198,9 @@ int main() {
 
     PRE_GAME_MENU();
 
-    POINT MAP[4][38][144];    //4 floors, each floor has 38 rows and 144 columns . struct point is defined for easier tracking of exploration
+    POINT MAP[4][38][144]; // <-----!!!!!!!!
+
+        //4 floors, each floor has 38 rows and 144 columns . struct point is defined for easier tracking of exploration
 
     if(GLOBAL_LOAD_SAVE==TRUE) {//load from save onto MAP
 
@@ -220,8 +222,7 @@ int main() {
 
     char TRANSITION_STORAGE='.'; //storage for swapping hero position and map objects
 
-
-
+    PRINT_MAP_ON_SCREEN(MAP);
 
     while(GLOBAL_EXIT_CODE==0) {//game loop
 
@@ -231,14 +232,12 @@ int main() {
 
     PRINT_MAP_ON_SCREEN(MAP);
 
-
-
     }
 
 
 
 
-    
+
     unsigned long long int FINISH_TIME=time(NULL);
 
     //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES. 
@@ -940,9 +939,11 @@ int VALIDATE_EMAIL(char EMAIL[]) {
 
 
 }
-void PRE_GAME_MENU() {
+int PRE_GAME_MENU() {
 
     PRINT_PREGAME_MENU();
+
+    
 
     while(TRUE) {
 
@@ -974,8 +975,7 @@ void PRE_GAME_MENU() {
 
             else if(INPUT=='e' || INPUT=='E') {
 
-                break;
-
+                return 0;
             }
         }
 
@@ -998,7 +998,7 @@ void PRE_GAME_MENU() {
                 refresh();
 
             }
-            else if(INPUT==KEY_DOWN) {
+            if(INPUT==KEY_DOWN) {
 
                 attron(COLOR_PAIR(1));
 
@@ -1015,11 +1015,11 @@ void PRE_GAME_MENU() {
                 refresh();
 
             }
-            else if(INPUT=='e' || INPUT=='E') {
+            if(INPUT=='e' || INPUT=='E') {
 
                 GLOBAL_LOAD_SAVE=TRUE;
 
-                break;
+                return 0;
 
             }
 
@@ -1098,6 +1098,8 @@ void PRE_GAME_MENU() {
 
             }
         }
+
+        
 
     }
 
@@ -1957,11 +1959,11 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
 
     //end of non-secret gen------------------------------------------------------------------------------------
 
-    for(int i=0 ; i<38 ; i++) {
+      for(int i=0 ; i<38 ; i++) {
         for(int j=0 ; j<144 ; j++) { 
             FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
         }
-    }
+    }   
 
     //secret door & trap generation. change real contents but not symbol!--------------------------------------------
 
@@ -1973,7 +1975,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
 
     int RANDOM_QUERRY=rand()%100+1; int SECRET_ROOM_SECTOR;
 
-    if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
+     if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
 
         while(TRUE) {
 
@@ -2108,6 +2110,8 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
         }
 
     }
+
+    
 
     //add traps and password doors later
 
@@ -3313,6 +3317,8 @@ int PROCESS_PLAYER_INPUT(int CURRENT_X, int CURRENT_Y,int CURRENT_FLOOR ,int USE
 void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
 
     clear();
+
+    move(0,0);
 
     attrset(A_NORMAL);
 
