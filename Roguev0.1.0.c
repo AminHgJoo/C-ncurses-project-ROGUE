@@ -54,9 +54,13 @@ typedef struct coords {
 
 
 SETTINGS GLOBAL_GUEST_SETTINGS;
+
 int GLOBAL_LOAD_SAVE=FALSE;
+
 int ROW,COLUMN;
+
 int GLOBAL_IS_GUEST=0;
+
 char GLOBAL_LOGGED_IN_USER[100];
 
 int GLOBAL_PLAYER_X_COORD;
@@ -85,8 +89,6 @@ void PRINT_COLOR_GUI();
 
 
 
-
-
 int GIVE_SECTOR_NUMBER(int , int );
 
 void LOAD_MAP(POINT [4][38][144]);
@@ -95,7 +97,7 @@ void GENERATE_MAP(POINT [4][38][144]);
 
 int GENERATE_FLOOR_SKELETON(POINT [38][144], int );
 
-void CONNECT_ROOMS(POINT [38][144]);
+void CONNECT_ROOMS_AND_RETURN_DOORS(POINT [38][144], DOOR [14]);
 
 void GENERATE_PILLARS(POINT [38][144]);
 
@@ -105,6 +107,7 @@ COORDS GIVE_STAIRS_ADDRESS_ENTRY(POINT [38][144]);
 
 COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT [38][144]);
 
+int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
 
 
 int main() {
@@ -1881,7 +1884,9 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     //generate non-secret random features(doors, windows, password doors and stairs, ...)
 
-    CONNECT_ROOMS(FLOOR);       //hallways doors and windows
+    DOOR RETURN_DOORS[14];
+
+    CONNECT_ROOMS_AND_RETURN_DOORS(FLOOR,RETURN_DOORS);       //hallways doors and windows, and getting all doors.
 
     int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   //GENERATE ENTRY/EXIT FOR DUNGEON
 
@@ -1890,7 +1895,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
     //end of non-secret gen
 
     for(int i=0 ; i<38 ; i++) {
-        for(int j=0 ; j<144 ; j++) {
+        for(int j=0 ; j<144 ; j++) { //<<<<------------ maybe import somewhere else ?
             FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
         }
     }
@@ -1931,150 +1936,120 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
         }
 
-        //turn regular doors' chars into walls and real insides into ?
+        //turn regular doors' chars into walls and real insides into ? . 1 2 3
+                                                                    //   4 5 6
+        if(SECRET_ROOM_SECTOR==1) {//connection : 1r <-> 2l, 1d <-> 4u
 
-        for(int i=((SECRET_ROOM_SECTOR-1)/3)*19 ; i<19+((SECRET_ROOM_SECTOR-1)/3)*19 ; i++) {
+            int DOOR3L=FIND_SPECIFIED_DOOR('r',1,RETURN_DOORS);
 
-            for(int j=((SECRET_ROOM_SECTOR-1)%3)*48 ; j<((SECRET_ROOM_SECTOR-1)%3)*48+48 ; j++) {
+            FLOOR[RETURN_DOORS[DOOR3L].y][RETURN_DOORS[DOOR3L].x].REAL_CONTENTS='?';
 
-                if(FLOOR[i][j].SYMBOL=='+') {//door found. find its doorway and block it off.
+            FLOOR[RETURN_DOORS[DOOR3L].y][RETURN_DOORS[DOOR3L].x].SYMBOL='|';
 
-                    int INDEX_X=j;
+            int DOOR4R=FIND_SPECIFIED_DOOR('l',2,RETURN_DOORS);
 
-                    int INDEX_Y=i;
+            FLOOR[RETURN_DOORS[DOOR4R].y][RETURN_DOORS[DOOR4R].x].REAL_CONTENTS='?';
 
-                    char FORBIDDEN_DIRECTION1=0,FORBIDDEN_DIRECTION2=0;
+            FLOOR[RETURN_DOORS[DOOR4R].y][RETURN_DOORS[DOOR4R].x].SYMBOL='|';
 
-                    int OCCUPIED=0;
+            int DOOR1D=FIND_SPECIFIED_DOOR('d',1,RETURN_DOORS);
 
-                    while (TRUE) {
+            FLOOR[RETURN_DOORS[DOOR1D].y][RETURN_DOORS[DOOR1D].x].REAL_CONTENTS='?';
 
-                        if((FLOOR[INDEX_Y+1][INDEX_X].SYMBOL=='#' || FLOOR[INDEX_Y+1][INDEX_X].SYMBOL=='+') && FORBIDDEN_DIRECTION1!='d' && FORBIDDEN_DIRECTION2!='d' ) {
+            FLOOR[RETURN_DOORS[DOOR1D].y][RETURN_DOORS[DOOR1D].x].SYMBOL='_';
 
+            int DOOR4U=FIND_SPECIFIED_DOOR('u',4,RETURN_DOORS);
 
-                            if(OCCUPIED==0) {
+            FLOOR[RETURN_DOORS[DOOR4U].y][RETURN_DOORS[DOOR4U].x].REAL_CONTENTS='?';
 
-                                FORBIDDEN_DIRECTION1='u';
+            FLOOR[RETURN_DOORS[DOOR4U].y][RETURN_DOORS[DOOR4U].x].SYMBOL='_';
 
-                                OCCUPIED++;
-
-                            }
-                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='u') {
-
-                                FORBIDDEN_DIRECTION2='u';
-
-                                OCCUPIED++;
-
-                            }
-
-                            INDEX_Y++;
-
-                            continue;
-
-                        }
-
-                        if((FLOOR[INDEX_Y-1][INDEX_X].SYMBOL=='#' || FLOOR[INDEX_Y-1][INDEX_X].SYMBOL=='+') && FORBIDDEN_DIRECTION1!='u' && FORBIDDEN_DIRECTION2!='u') {
-
-                            if(OCCUPIED==0) {
-
-                                FORBIDDEN_DIRECTION1='d';
-
-                                OCCUPIED++;
-
-                            }
-                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='d') {
-
-                                FORBIDDEN_DIRECTION2='d';
-
-                                OCCUPIED++;
-
-                            }
-
-                            INDEX_Y--;
-
-                            continue;
-                            
-                        }
-
-                        if((FLOOR[INDEX_Y][INDEX_X+1].SYMBOL=='#'  || FLOOR[INDEX_Y][INDEX_X+1].SYMBOL=='+')&& FORBIDDEN_DIRECTION1!='r' && FORBIDDEN_DIRECTION2!='r') {
-
-                            if(OCCUPIED==0) {
-
-                                FORBIDDEN_DIRECTION1='l';
-
-                                OCCUPIED++;
-
-                            }
-                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='l') {
-
-                                FORBIDDEN_DIRECTION2='l';
-
-                                OCCUPIED++;
-
-                            }
-
-                            INDEX_X++;
-
-                            continue;
-                            
-                        }
-
-                        if((FLOOR[INDEX_Y][INDEX_X-1].SYMBOL=='#' || FLOOR[INDEX_Y][INDEX_X-1].SYMBOL=='+')&& FORBIDDEN_DIRECTION1!='l' && FORBIDDEN_DIRECTION2!='l') {
-
-                            if(OCCUPIED==0) {
-
-                                FORBIDDEN_DIRECTION1='r';
-
-                                OCCUPIED++;
-
-                            }
-                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='r') {
-
-                                FORBIDDEN_DIRECTION2='r';
-
-                                OCCUPIED++;
-
-                            }
-
-                            INDEX_X--;
-
-                            continue;
-                            
-                        }
-
-                        if(FLOOR[INDEX_Y][INDEX_X].SYMBOL=='+') {
-
-                            FLOOR[INDEX_Y][INDEX_X].REAL_CONTENTS='?';
-
-                            if(FLOOR[INDEX_Y][INDEX_X-1].SYMBOL=='_' && FLOOR[INDEX_Y][INDEX_X+1].SYMBOL=='_') {
-
-                                FLOOR[INDEX_Y][INDEX_X].SYMBOL='_';
-
-                            }
-
-                            else {
-
-                                FLOOR[INDEX_Y][INDEX_X].SYMBOL='|';
-
-                            }
-
-                            break;
-
-                        }
-
-                    }
-                    
-                    /*if(FLOOR[i][j-1].SYMBOL=='_' && FLOOR[i][j+1].SYMBOL=='_') {//put horizontal wall
-                        FLOOR[i][j].SYMBOL='_';
-                    }
-
-                    else {//put vertical wall
-                        FLOOR[i][j].SYMBOL='|';
-                    }*/
-
-                }
-            }
         }
+    
+        else if(SECRET_ROOM_SECTOR==3) {//connection : 3l <-> 2r, 3d <-> 6u
+
+            int DOOR3L=FIND_SPECIFIED_DOOR('l',3,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR3L].y][RETURN_DOORS[DOOR3L].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR3L].y][RETURN_DOORS[DOOR3L].x].SYMBOL='|';
+
+            int DOOR6L=FIND_SPECIFIED_DOOR('r',2,RETURN_DOORS);
+            
+            FLOOR[RETURN_DOORS[DOOR6L].y][RETURN_DOORS[DOOR6L].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR6L].y][RETURN_DOORS[DOOR6L].x].SYMBOL='|';
+
+            int DOOR3D=FIND_SPECIFIED_DOOR('d',3,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR3D].y][RETURN_DOORS[DOOR3D].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR3D].y][RETURN_DOORS[DOOR3D].x].SYMBOL='_';
+
+            int DOOR6U=FIND_SPECIFIED_DOOR('u',6,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR6U].y][RETURN_DOORS[DOOR6U].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR6U].y][RETURN_DOORS[DOOR6U].x].SYMBOL='_';
+
+        }
+
+        else if(SECRET_ROOM_SECTOR==4) {// connection : 4u <-> 1d, 4r <-> 5l
+
+            int DOOR4U=FIND_SPECIFIED_DOOR('u',4,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR4U].y][RETURN_DOORS[DOOR4U].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR4U].y][RETURN_DOORS[DOOR4U].x].SYMBOL='_';
+
+            int DOOR1D=FIND_SPECIFIED_DOOR('d',1,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR1D].y][RETURN_DOORS[DOOR1D].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR1D].y][RETURN_DOORS[DOOR1D].x].SYMBOL='_';
+
+            int DOOR4R=FIND_SPECIFIED_DOOR('r',4,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR4R].y][RETURN_DOORS[DOOR4R].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR4R].y][RETURN_DOORS[DOOR4R].x].SYMBOL='|';
+
+            int DOOR5L=FIND_SPECIFIED_DOOR('l',5,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR5L].y][RETURN_DOORS[DOOR5L].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR5L].y][RETURN_DOORS[DOOR5L].x].SYMBOL='|';
+
+        }
+
+        else {//6 connection : 6l <-> 5r, 6u <-> 3d
+
+            int DOOR3D=FIND_SPECIFIED_DOOR('d',3,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR3D].y][RETURN_DOORS[DOOR3D].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR3D].y][RETURN_DOORS[DOOR3D].x].SYMBOL='_';
+
+            int DOOR6U=FIND_SPECIFIED_DOOR('u',6,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR6U].y][RETURN_DOORS[DOOR6U].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR6U].y][RETURN_DOORS[DOOR6U].x].SYMBOL='_';
+
+            int DOOR6L=FIND_SPECIFIED_DOOR('l',6,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR6L].y][RETURN_DOORS[DOOR6L].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR6L].y][RETURN_DOORS[DOOR6L].x].SYMBOL='|';
+
+            int DOOR5R=FIND_SPECIFIED_DOOR('r',5,RETURN_DOORS);
+
+            FLOOR[RETURN_DOORS[DOOR5R].y][RETURN_DOORS[DOOR5R].x].REAL_CONTENTS='?';
+
+            FLOOR[RETURN_DOORS[DOOR5R].y][RETURN_DOORS[DOOR5R].x].SYMBOL='|';
+
+        }
+
     }
 
     //add traps and password doors later
@@ -2089,37 +2064,36 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
 }
 
-void CONNECT_ROOMS(POINT FLOOR[38][144]) {
-
-    DOOR ALL_DOORS[14];
+void CONNECT_ROOMS_AND_RETURN_DOORS(POINT FLOOR[38][144], DOOR RETURN_DOORS[14]) {
 
     int k=0;
+
     //search the board for doors, mark their locations and sectors
     for( int i=0 ; i<38 ; i++) {
         for( int j=0 ; j<144 ; j++) {
             if(FLOOR[i][j].SYMBOL=='+') {
 
-                ALL_DOORS[k].x=j;
+                RETURN_DOORS[k].x=j;
 
-                ALL_DOORS[k].y=i;
+                RETURN_DOORS[k].y=i;
 
                 if(i>=0 && i<19) {//sectors 1,2,3
 
                     if(j>=0 && j<48) {
 
-                        ALL_DOORS[k].SECTOR=1;
+                        RETURN_DOORS[k].SECTOR=1;
 
                     }
 
                     if(j>=48 && j<96) {
 
-                        ALL_DOORS[k].SECTOR=2;
+                        RETURN_DOORS[k].SECTOR=2;
 
                     }
 
                     if(j>=96 && j<144) {
 
-                        ALL_DOORS[k].SECTOR=3;
+                        RETURN_DOORS[k].SECTOR=3;
 
                     }
 
@@ -2129,19 +2103,19 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
                     if(j>=0 && j<48) {
 
-                        ALL_DOORS[k].SECTOR=4;
+                        RETURN_DOORS[k].SECTOR=4;
 
                     }
 
                     if(j>=48 && j<96) {
 
-                        ALL_DOORS[k].SECTOR=5;
+                        RETURN_DOORS[k].SECTOR=5;
 
                     }
 
                     if(j>=96 && j<144) {
 
-                        ALL_DOORS[k].SECTOR=6;
+                        RETURN_DOORS[k].SECTOR=6;
 
                     }
 
@@ -2157,10 +2131,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     for(int i=0 ; i<14 ; i++) {
         for(int j=i+1 ; j<14 ; j++) {
-            if(ALL_DOORS[i].SECTOR>ALL_DOORS[j].SECTOR) {
-                DOOR temp=ALL_DOORS[i];
-                ALL_DOORS[i]=ALL_DOORS[j];
-                ALL_DOORS[j]=temp;
+            if(RETURN_DOORS[i].SECTOR>RETURN_DOORS[j].SECTOR) {
+                DOOR temp=RETURN_DOORS[i];
+                RETURN_DOORS[i]=RETURN_DOORS[j];
+                RETURN_DOORS[j]=temp;
 
             }
 
@@ -2169,196 +2143,196 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     //sector 1 has 2 doors :
 
-    if(ALL_DOORS[0].x>ALL_DOORS[1].x) {
+    if(RETURN_DOORS[0].x>RETURN_DOORS[1].x) {
 
-        ALL_DOORS[0].DIRECTION='r';
+        RETURN_DOORS[0].DIRECTION='r';
 
-        ALL_DOORS[1].DIRECTION='d';
+        RETURN_DOORS[1].DIRECTION='d';
 
     }
     else {
-        ALL_DOORS[1].DIRECTION='r';
+        RETURN_DOORS[1].DIRECTION='r';
 
-        ALL_DOORS[0].DIRECTION='d';
+        RETURN_DOORS[0].DIRECTION='d';
     }
 
     //sector 2 has 3 :
 
-    if(ALL_DOORS[2].y>ALL_DOORS[3].y && ALL_DOORS[2].y>ALL_DOORS[4].y) {
+    if(RETURN_DOORS[2].y>RETURN_DOORS[3].y && RETURN_DOORS[2].y>RETURN_DOORS[4].y) {
 
-        ALL_DOORS[2].DIRECTION='d';
+        RETURN_DOORS[2].DIRECTION='d';
 
-        if(ALL_DOORS[3].x>ALL_DOORS[4].x) {
+        if(RETURN_DOORS[3].x>RETURN_DOORS[4].x) {
 
-            ALL_DOORS[3].DIRECTION='r';
+            RETURN_DOORS[3].DIRECTION='r';
 
-            ALL_DOORS[4].DIRECTION='l';
+            RETURN_DOORS[4].DIRECTION='l';
         }
 
         else {
-            ALL_DOORS[4].DIRECTION='r';
+            RETURN_DOORS[4].DIRECTION='r';
 
-            ALL_DOORS[3].DIRECTION='l';
+            RETURN_DOORS[3].DIRECTION='l';
         }
 
 
     }
 
-    if(ALL_DOORS[3].y>ALL_DOORS[2].y && ALL_DOORS[3].y>ALL_DOORS[4].y) {
+    if(RETURN_DOORS[3].y>RETURN_DOORS[2].y && RETURN_DOORS[3].y>RETURN_DOORS[4].y) {
 
-        ALL_DOORS[3].DIRECTION='d';
+        RETURN_DOORS[3].DIRECTION='d';
 
-         if(ALL_DOORS[2].x>ALL_DOORS[4].x) {
+        if(RETURN_DOORS[2].x>RETURN_DOORS[4].x) {
 
-            ALL_DOORS[2].DIRECTION='r';
+            RETURN_DOORS[2].DIRECTION='r';
 
-            ALL_DOORS[4].DIRECTION='l';
+            RETURN_DOORS[4].DIRECTION='l';
         }
 
         else {
-            ALL_DOORS[4].DIRECTION='r';
+            RETURN_DOORS[4].DIRECTION='r';
 
-            ALL_DOORS[2].DIRECTION='l';
+            RETURN_DOORS[2].DIRECTION='l';
         }
 
     }
 
-    if(ALL_DOORS[4].y>ALL_DOORS[2].y && ALL_DOORS[4].y>ALL_DOORS[3].y) {
+    if(RETURN_DOORS[4].y>RETURN_DOORS[2].y && RETURN_DOORS[4].y>RETURN_DOORS[3].y) {
 
-        ALL_DOORS[4].DIRECTION='d';
+        RETURN_DOORS[4].DIRECTION='d';
 
-         if(ALL_DOORS[3].x>ALL_DOORS[2].x) {
+        if(RETURN_DOORS[3].x>RETURN_DOORS[2].x) {
 
-            ALL_DOORS[3].DIRECTION='r';
+            RETURN_DOORS[3].DIRECTION='r';
 
-            ALL_DOORS[2].DIRECTION='l';
+            RETURN_DOORS[2].DIRECTION='l';
         }
 
         else {
-            ALL_DOORS[2].DIRECTION='r';
+            RETURN_DOORS[2].DIRECTION='r';
 
-            ALL_DOORS[3].DIRECTION='l';
+            RETURN_DOORS[3].DIRECTION='l';
         }
 
     }
 
     //sector 3 has 2:
 
-    if(ALL_DOORS[5].y>ALL_DOORS[6].y) {
+    if(RETURN_DOORS[5].y>RETURN_DOORS[6].y) {
 
-        ALL_DOORS[5].DIRECTION='d';
+        RETURN_DOORS[5].DIRECTION='d';
 
-        ALL_DOORS[6].DIRECTION='l';
+        RETURN_DOORS[6].DIRECTION='l';
 
     }
 
     else {
 
-        ALL_DOORS[6].DIRECTION='d';
+        RETURN_DOORS[6].DIRECTION='d';
 
-        ALL_DOORS[5].DIRECTION='l';
+        RETURN_DOORS[5].DIRECTION='l';
 
     }
 
     //sector 4 has 2
 
-    if(ALL_DOORS[7].x>ALL_DOORS[8].x) {
+    if(RETURN_DOORS[7].x>RETURN_DOORS[8].x) {
 
-        ALL_DOORS[7].DIRECTION='r';
+        RETURN_DOORS[7].DIRECTION='r';
 
-        ALL_DOORS[8].DIRECTION='u';
+        RETURN_DOORS[8].DIRECTION='u';
 
     }
     
     else {
 
-        ALL_DOORS[8].DIRECTION='r';
+        RETURN_DOORS[8].DIRECTION='r';
 
-        ALL_DOORS[7].DIRECTION='u';
+        RETURN_DOORS[7].DIRECTION='u';
 
     }
 
     //sector 5 has 3
 
-    if(ALL_DOORS[9].y<ALL_DOORS[10].y && ALL_DOORS[9].y<ALL_DOORS[11].y) {
+    if(RETURN_DOORS[9].y<RETURN_DOORS[10].y && RETURN_DOORS[9].y<RETURN_DOORS[11].y) {
 
-        ALL_DOORS[9].DIRECTION='u';
+        RETURN_DOORS[9].DIRECTION='u';
 
-        if(ALL_DOORS[10].x>ALL_DOORS[11].x) {
+        if(RETURN_DOORS[10].x>RETURN_DOORS[11].x) {
 
-            ALL_DOORS[10].DIRECTION='r';
+            RETURN_DOORS[10].DIRECTION='r';
 
-            ALL_DOORS[11].DIRECTION='l';
+            RETURN_DOORS[11].DIRECTION='l';
 
         }
 
         else {
 
-            ALL_DOORS[11].DIRECTION='r';
+            RETURN_DOORS[11].DIRECTION='r';
 
-            ALL_DOORS[10].DIRECTION='l';
+            RETURN_DOORS[10].DIRECTION='l';
 
         }
 
     }
 
-    else if(ALL_DOORS[10].y<ALL_DOORS[9].y && ALL_DOORS[10].y<ALL_DOORS[11].y) {
+    else if(RETURN_DOORS[10].y<RETURN_DOORS[9].y && RETURN_DOORS[10].y<RETURN_DOORS[11].y) {
 
-        ALL_DOORS[10].DIRECTION='u';
+        RETURN_DOORS[10].DIRECTION='u';
 
-        if(ALL_DOORS[9].x>ALL_DOORS[11].x) {
+        if(RETURN_DOORS[9].x>RETURN_DOORS[11].x) {
 
-            ALL_DOORS[9].DIRECTION='r';
+            RETURN_DOORS[9].DIRECTION='r';
 
-            ALL_DOORS[11].DIRECTION='l';
+            RETURN_DOORS[11].DIRECTION='l';
 
         }
 
         else {
 
-            ALL_DOORS[11].DIRECTION='r';
+            RETURN_DOORS[11].DIRECTION='r';
 
-            ALL_DOORS[9].DIRECTION='l';
+            RETURN_DOORS[9].DIRECTION='l';
 
         }
     }
 
     else {
 
-        ALL_DOORS[11].DIRECTION='u';
+        RETURN_DOORS[11].DIRECTION='u';
 
-        if(ALL_DOORS[10].x>ALL_DOORS[9].x) {
+        if(RETURN_DOORS[10].x>RETURN_DOORS[9].x) {
 
-            ALL_DOORS[10].DIRECTION='r';
+            RETURN_DOORS[10].DIRECTION='r';
 
-            ALL_DOORS[9].DIRECTION='l';
+            RETURN_DOORS[9].DIRECTION='l';
 
         }
 
         else {
 
-            ALL_DOORS[9].DIRECTION='r';
+            RETURN_DOORS[9].DIRECTION='r';
 
-            ALL_DOORS[10].DIRECTION='l';
+            RETURN_DOORS[10].DIRECTION='l';
 
         }
     }
 
     //sector 6 has 2
 
-    if(ALL_DOORS[12].y>ALL_DOORS[13].y) {
+    if(RETURN_DOORS[12].y>RETURN_DOORS[13].y) {
 
-        ALL_DOORS[12].DIRECTION='l';
+        RETURN_DOORS[12].DIRECTION='l';
 
-        ALL_DOORS[13].DIRECTION='u';
+        RETURN_DOORS[13].DIRECTION='u';
 
     }
 
     else {
 
-        ALL_DOORS[13].DIRECTION='l';
+        RETURN_DOORS[13].DIRECTION='l';
 
-        ALL_DOORS[12].DIRECTION='u';
+        RETURN_DOORS[12].DIRECTION='u';
     }
 
     //all doors now have been found and classified in terms of direction and sector. now to connect them.
@@ -2367,11 +2341,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     /*  for(int k=0 ; k<14 ; k++) {
 
-        int i=ALL_DOORS[k].y;
+        int i=RETURN_DOORS[k].y;
 
-        int j=ALL_DOORS[k].x;
+        int j=RETURN_DOORS[k].x;
 
-        FLOOR[i][j].SYMBOL=ALL_DOORS[k].DIRECTION;
+        FLOOR[i][j].SYMBOL=RETURN_DOORS[k].DIRECTION;
 
         }   */
 
@@ -2381,11 +2355,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
     for(int k=0 ; k<14 ; k++) {//hallway gen completed
 
-        if(ALL_DOORS[k].SECTOR==1 && ALL_DOORS[k].DIRECTION=='r') {//1r
+        if(RETURN_DOORS[k].SECTOR==1 && RETURN_DOORS[k].DIRECTION=='r') {//1r
 
-            int i=ALL_DOORS[k].y;
+            int i=RETURN_DOORS[k].y;
 
-            int j=ALL_DOORS[k].x+1;
+            int j=RETURN_DOORS[k].x+1;
 
             int I_FINAL;
 
@@ -2393,11 +2367,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==2 && ALL_DOORS[l].DIRECTION=='l') {
+                if(RETURN_DOORS[l].SECTOR==2 && RETURN_DOORS[l].DIRECTION=='l') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2420,10 +2394,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
             }
         }
 
-        if(ALL_DOORS[k].SECTOR==1 && ALL_DOORS[k].DIRECTION=='d') {//1d
-            int i=ALL_DOORS[k].y+1;
+        if(RETURN_DOORS[k].SECTOR==1 && RETURN_DOORS[k].DIRECTION=='d') {//1d
+            int i=RETURN_DOORS[k].y+1;
 
-            int j=ALL_DOORS[k].x;
+            int j=RETURN_DOORS[k].x;
 
             int I_FINAL;
 
@@ -2431,11 +2405,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==4 && ALL_DOORS[l].DIRECTION=='u') {
+                if(RETURN_DOORS[l].SECTOR==4 && RETURN_DOORS[l].DIRECTION=='u') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2458,10 +2432,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
             }
         }
 
-        if(ALL_DOORS[k].SECTOR==2 && ALL_DOORS[k].DIRECTION=='r') {//2r
-            int i=ALL_DOORS[k].y;
+        if(RETURN_DOORS[k].SECTOR==2 && RETURN_DOORS[k].DIRECTION=='r') {//2r
+            int i=RETURN_DOORS[k].y;
 
-            int j=ALL_DOORS[k].x+1;
+            int j=RETURN_DOORS[k].x+1;
 
             int I_FINAL;
 
@@ -2469,11 +2443,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==3 && ALL_DOORS[l].DIRECTION=='l') {
+                if(RETURN_DOORS[l].SECTOR==3 && RETURN_DOORS[l].DIRECTION=='l') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2496,10 +2470,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
             }
         }
 
-        if(ALL_DOORS[k].SECTOR==2 && ALL_DOORS[k].DIRECTION=='d') {//2d
-            int i=ALL_DOORS[k].y+1;
+        if(RETURN_DOORS[k].SECTOR==2 && RETURN_DOORS[k].DIRECTION=='d') {//2d
+            int i=RETURN_DOORS[k].y+1;
 
-            int j=ALL_DOORS[k].x;
+            int j=RETURN_DOORS[k].x;
 
             int I_FINAL;
 
@@ -2507,11 +2481,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==5 && ALL_DOORS[l].DIRECTION=='u') {
+                if(RETURN_DOORS[l].SECTOR==5 && RETURN_DOORS[l].DIRECTION=='u') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2534,10 +2508,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
             }
         }
 
-        if(ALL_DOORS[k].SECTOR==3 && ALL_DOORS[k].DIRECTION=='d') {//3d
-            int i=ALL_DOORS[k].y+1;
+        if(RETURN_DOORS[k].SECTOR==3 && RETURN_DOORS[k].DIRECTION=='d') {//3d
+            int i=RETURN_DOORS[k].y+1;
 
-            int j=ALL_DOORS[k].x;
+            int j=RETURN_DOORS[k].x;
 
             int I_FINAL;
 
@@ -2545,11 +2519,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==6 && ALL_DOORS[l].DIRECTION=='u') {
+                if(RETURN_DOORS[l].SECTOR==6 && RETURN_DOORS[l].DIRECTION=='u') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2572,10 +2546,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
             }
         }
 
-        if(ALL_DOORS[k].SECTOR==4 && ALL_DOORS[k].DIRECTION=='r') {//4r
-            int i=ALL_DOORS[k].y;
+        if(RETURN_DOORS[k].SECTOR==4 && RETURN_DOORS[k].DIRECTION=='r') {//4r
+            int i=RETURN_DOORS[k].y;
 
-            int j=ALL_DOORS[k].x+1;
+            int j=RETURN_DOORS[k].x+1;
 
             int I_FINAL;
 
@@ -2583,11 +2557,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==5 && ALL_DOORS[l].DIRECTION=='l') {
+                if(RETURN_DOORS[l].SECTOR==5 && RETURN_DOORS[l].DIRECTION=='l') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2610,10 +2584,10 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
             }
         }
 
-        if(ALL_DOORS[k].SECTOR==5 && ALL_DOORS[k].DIRECTION=='r') {//5r
-            int i=ALL_DOORS[k].y;
+        if(RETURN_DOORS[k].SECTOR==5 && RETURN_DOORS[k].DIRECTION=='r') {//5r
+            int i=RETURN_DOORS[k].y;
 
-            int j=ALL_DOORS[k].x+1;
+            int j=RETURN_DOORS[k].x+1;
 
             int I_FINAL;
 
@@ -2621,11 +2595,11 @@ void CONNECT_ROOMS(POINT FLOOR[38][144]) {
 
             for(int l=0 ; l<14 ; l++) {
 
-                if(ALL_DOORS[l].SECTOR==6 && ALL_DOORS[l].DIRECTION=='l') {
+                if(RETURN_DOORS[l].SECTOR==6 && RETURN_DOORS[l].DIRECTION=='l') {
 
-                    I_FINAL=ALL_DOORS[l].y;
+                    I_FINAL=RETURN_DOORS[l].y;
 
-                    J_FINAL=ALL_DOORS[l].x;
+                    J_FINAL=RETURN_DOORS[l].x;
 
                     break;
 
@@ -2912,4 +2886,17 @@ COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT FLOOR[38][144]) {
             }
         }
     }
+}
+
+int FIND_SPECIFIED_DOOR(char WANTED_DIRECTION,  int WANTED_SECTOR, DOOR ALL_DOORS[14]) {
+
+    for(int k=0 ; k<14 ; k++) {
+
+        if(ALL_DOORS[k].DIRECTION==WANTED_DIRECTION && ALL_DOORS[k].SECTOR==WANTED_SECTOR) {
+
+            return k;
+
+        }
+    }
+
 }
