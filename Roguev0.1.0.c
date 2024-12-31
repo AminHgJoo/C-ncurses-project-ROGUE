@@ -82,9 +82,12 @@ void OPEN_MUSIC_MENU();
 void OPEN_DIFFICULTY_MENU();
 void OPEN_HERO_COLOR_MENU();
 void PRINT_COLOR_GUI();
+
+
+
+
+
 int GIVE_SECTOR_NUMBER(int , int );
-
-
 
 void LOAD_MAP(POINT [4][38][144]);
 
@@ -1388,6 +1391,8 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
     ENTRY_POINT->SYMBOL='H';
 
+    ENTRY_POINT->REAL_CONTENTS='.';
+
     EXIT_POINT->SYMBOL='X';
 
 
@@ -1896,7 +1901,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
     COORDS END_COORDS=GIVE_STAIRS_ADDRESS_EXIT(FLOOR);
 
-    int START_SECTOR=GIVE_SECTOR_NUMBER(START_COORDS.x,START_COORDS.y);
+    int START_SECTOR_FOR_RNG=GIVE_SECTOR_NUMBER(START_COORDS.x,START_COORDS.y);
 
     int END_SECTOR=GIVE_SECTOR_NUMBER(END_COORDS.x,END_COORDS.y);
 
@@ -1914,7 +1919,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
 
             if((SECRET_ROOM_SECTOR==1 || SECRET_ROOM_SECTOR==3 || SECRET_ROOM_SECTOR==4 || SECRET_ROOM_SECTOR==6 )
 
-            &&(SECRET_ROOM_SECTOR!=START_SECTOR)
+            &&(SECRET_ROOM_SECTOR!=START_SECTOR_FOR_RNG)
 
             &&(SECRET_ROOM_SECTOR!=END_SECTOR)) 
 
@@ -1929,32 +1934,150 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {//
         //turn regular doors' chars into walls and real insides into ?
 
         for(int i=((SECRET_ROOM_SECTOR-1)/3)*19 ; i<19+((SECRET_ROOM_SECTOR-1)/3)*19 ; i++) {
+
             for(int j=((SECRET_ROOM_SECTOR-1)%3)*48 ; j<((SECRET_ROOM_SECTOR-1)%3)*48+48 ; j++) {
-                if(FLOOR[i][j].SYMBOL=='+') {//door found. find its direction
 
-                    FLOOR[i][j].REAL_CONTENTS='?';
+                if(FLOOR[i][j].SYMBOL=='+') {//door found. find its doorway and block it off.
 
-                    if(FLOOR[i][j-1].SYMBOL=='_' && FLOOR[i][j+1].SYMBOL=='_') {//put horizontal wall
+                    int INDEX_X=j;
+
+                    int INDEX_Y=i;
+
+                    char FORBIDDEN_DIRECTION1=0,FORBIDDEN_DIRECTION2=0;
+
+                    int OCCUPIED=0;
+
+                    while (TRUE) {
+
+                        if((FLOOR[INDEX_Y+1][INDEX_X].SYMBOL=='#' || FLOOR[INDEX_Y+1][INDEX_X].SYMBOL=='+') && FORBIDDEN_DIRECTION1!='d' && FORBIDDEN_DIRECTION2!='d' ) {
+
+
+                            if(OCCUPIED==0) {
+
+                                FORBIDDEN_DIRECTION1='u';
+
+                                OCCUPIED++;
+
+                            }
+                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='u') {
+
+                                FORBIDDEN_DIRECTION2='u';
+
+                                OCCUPIED++;
+
+                            }
+
+                            INDEX_Y++;
+
+                            continue;
+
+                        }
+
+                        if((FLOOR[INDEX_Y-1][INDEX_X].SYMBOL=='#' || FLOOR[INDEX_Y-1][INDEX_X].SYMBOL=='+') && FORBIDDEN_DIRECTION1!='u' && FORBIDDEN_DIRECTION2!='u') {
+
+                            if(OCCUPIED==0) {
+
+                                FORBIDDEN_DIRECTION1='d';
+
+                                OCCUPIED++;
+
+                            }
+                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='d') {
+
+                                FORBIDDEN_DIRECTION2='d';
+
+                                OCCUPIED++;
+
+                            }
+
+                            INDEX_Y--;
+
+                            continue;
+                            
+                        }
+
+                        if((FLOOR[INDEX_Y][INDEX_X+1].SYMBOL=='#'  || FLOOR[INDEX_Y][INDEX_X+1].SYMBOL=='+')&& FORBIDDEN_DIRECTION1!='r' && FORBIDDEN_DIRECTION2!='r') {
+
+                            if(OCCUPIED==0) {
+
+                                FORBIDDEN_DIRECTION1='l';
+
+                                OCCUPIED++;
+
+                            }
+                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='l') {
+
+                                FORBIDDEN_DIRECTION2='l';
+
+                                OCCUPIED++;
+
+                            }
+
+                            INDEX_X++;
+
+                            continue;
+                            
+                        }
+
+                        if((FLOOR[INDEX_Y][INDEX_X-1].SYMBOL=='#' || FLOOR[INDEX_Y][INDEX_X-1].SYMBOL=='+')&& FORBIDDEN_DIRECTION1!='l' && FORBIDDEN_DIRECTION2!='l') {
+
+                            if(OCCUPIED==0) {
+
+                                FORBIDDEN_DIRECTION1='r';
+
+                                OCCUPIED++;
+
+                            }
+                            else if(OCCUPIED==1 && FORBIDDEN_DIRECTION1!='r') {
+
+                                FORBIDDEN_DIRECTION2='r';
+
+                                OCCUPIED++;
+
+                            }
+
+                            INDEX_X--;
+
+                            continue;
+                            
+                        }
+
+                        if(FLOOR[INDEX_Y][INDEX_X].SYMBOL=='+') {
+
+                            FLOOR[INDEX_Y][INDEX_X].REAL_CONTENTS='?';
+
+                            if(FLOOR[INDEX_Y][INDEX_X-1].SYMBOL=='_' && FLOOR[INDEX_Y][INDEX_X+1].SYMBOL=='_') {
+
+                                FLOOR[INDEX_Y][INDEX_X].SYMBOL='_';
+
+                            }
+
+                            else {
+
+                                FLOOR[INDEX_Y][INDEX_X].SYMBOL='|';
+
+                            }
+
+                            break;
+
+                        }
+
+                    }
+                    
+                    /*if(FLOOR[i][j-1].SYMBOL=='_' && FLOOR[i][j+1].SYMBOL=='_') {//put horizontal wall
                         FLOOR[i][j].SYMBOL='_';
                     }
 
                     else {//put vertical wall
                         FLOOR[i][j].SYMBOL='|';
-                    }
+                    }*/
 
                 }
             }
         }
-
-
-
-
-
-
-
     }
 
-
+    //add traps and password doors later
 
 
 
