@@ -117,8 +117,7 @@ void PRINT_COLOR_GUI();
 void LOAD_USER_SETTINGS();
 void HANDLE_SETTINGS();
 void PRINT_DIFFICULTY_MENU();
-
-
+void PRINT_MUSIC_MENU();
 
 
 
@@ -689,19 +688,19 @@ void USER_REGISTERATION() {
 
     FILE *SCOREBOARD=fopen("user_scores.txt","a+");
 
-    fprintf(SCOREBOARD,"%s %d %d %d %d\n",USERNAME,0,0,0,0);
+    fprintf(SCOREBOARD,"%s %d %d %d %d ",USERNAME,0,0,0,0);
 
     fclose(SCOREBOARD);
 
     FILE *SETTINGS=fopen("user_settings.txt","a+");
 
-    fprintf(SETTINGS,"%s w s n\n",USERNAME);
+    fprintf(SETTINGS,"%s g r n ",USERNAME);
 
     fclose(SETTINGS);
 
     FILE *SAVES=fopen("user_saves_and_inventory.txt","a+");
 
-    fprintf(SAVES,"%s f\n",USERNAME);
+    fprintf(SAVES,"%s f ",USERNAME);
 
     fclose(SAVES);
 
@@ -874,6 +873,8 @@ int USER_LOGIN() {
     CLEAR_TEXT_FOR_LOGIN_ERRORS();
 
     RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
+
+    curs_set(0);
 
     mvprintw(ROW/3 +3,COLUMN/2 -21 ,"Login Successful. Press a Key to Continue.");
 
@@ -1344,16 +1345,219 @@ void PRINT_SETTINGS_MENU() {
     refresh();
 
 }
-void OPEN_MUSIC_MENU() {//
-    if(GLOBAL_IS_GUEST==TRUE) {
+void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
+
+    PRINT_MUSIC_MENU();
+
+    while(TRUE) {
+
+        int x,y;
+
+        getyx(stdscr,y,x);
+
+        char LARGE_STRING[70]="Current Music is : ";
+
+        char COLOR_SPELLED_OUT[100];
+
+        if(GLOBAL_SETTINGS.MUSIC=='s') {
+            strcpy(COLOR_SPELLED_OUT,"Sleep Away");
+        }
+        else if(GLOBAL_SETTINGS.MUSIC=='m') {
+            strcpy(COLOR_SPELLED_OUT,"Maid With The Flaxen Hair");
+        }
+        else if(GLOBAL_SETTINGS.MUSIC=='r'){
+            strcpy(COLOR_SPELLED_OUT,"Never Gonna Give You Up");
+        }
+
+        strcat(LARGE_STRING,COLOR_SPELLED_OUT);
+
+        attrset(GOLD_COLORED_CELL);
+
+        mvprintw(1,COLUMN/2-36 ,"                                                                        ");
+
+        mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
+
+        attroff(GOLD_COLORED_CELL);
+
+        int INPUT=getch();
+
+        if(y==ROW/5) {
+
+            if(INPUT==KEY_DOWN) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(ROW/5, COLUMN/2 -12 ,"Never Gonna Give You Up");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(2*ROW/5, COLUMN/2 -5 ,"Sleep Away");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);                
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+
+                GLOBAL_SETTINGS.MUSIC='r';
+
+                move(ROW/5,0);
+
+            }
+            else {
+                move(ROW/5,0);
+            }
+
+        }
+        else if(y==2*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(2*ROW/5, COLUMN/2 -5 ,"Sleep Away");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(ROW/5, COLUMN/2 -12 ,"Never Gonna Give You Up");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(2*ROW/5, COLUMN/2 -5 ,"Sleep Away");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                GLOBAL_SETTINGS.MUSIC='s';
+
+                move(2*ROW/5,0);
+            }
+            else {
+                move(2*ROW/5,0);
+            }
+        }
+        else if(y==3*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(2*ROW/5, COLUMN/2 -5 ,"Sleep Away");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                GLOBAL_SETTINGS.MUSIC='m';
+
+                move(3*ROW/5,0);
+            }
+            else {
+                move(3*ROW/5,0);
+            }
+        }
+        else {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                
+                break;
+
+            }
+            else {
+                move(4*ROW/5,0);
+            }
+        }
 
     }
 
-    else {
-        
+    if(GLOBAL_IS_GUEST==FALSE) {//write final result in file
+
+        FILE* SETTINGS_FILE=fopen("user_settings.txt","r");
+
+        char TEMP_STRING[100000];
+
+        fgets(TEMP_STRING,100000,SETTINGS_FILE);
+
+        char *PTR=strstr(TEMP_STRING,GLOBAL_LOGGED_IN_USER); 
+
+        PTR+=strlen(GLOBAL_LOGGED_IN_USER)+1;//move PTR to first char location g r n    \green rickroll normal/
+
+        PTR[2]=GLOBAL_SETTINGS.MUSIC;
+
+        fclose(SETTINGS_FILE);
+
+        FILE *WRITE_MODE_PTR=fopen("user_settings.txt","w");
+
+        fprintf(WRITE_MODE_PTR,"%s",TEMP_STRING);
+
+        fclose(WRITE_MODE_PTR); 
+
     }
+
+
 }
-void OPEN_DIFFICULTY_MENU() {//
+void OPEN_DIFFICULTY_MENU() {
 
     PRINT_DIFFICULTY_MENU();
 
@@ -1365,19 +1569,19 @@ void OPEN_DIFFICULTY_MENU() {//
 
         char LARGE_STRING[70]="Current Difficulty is : ";
 
-        char DIFFICULTY_SPELLED_OUT[10];
+        char COLOR_SPELLED_OUT[10];
 
         if(GLOBAL_SETTINGS.DIFFICULTY=='h') {
-            strcpy(DIFFICULTY_SPELLED_OUT,"Hard");
+            strcpy(COLOR_SPELLED_OUT,"Hard");
         }
         else if(GLOBAL_SETTINGS.DIFFICULTY=='e') {
-            strcpy(DIFFICULTY_SPELLED_OUT,"Easy");
+            strcpy(COLOR_SPELLED_OUT,"Easy");
         }
         else if(GLOBAL_SETTINGS.DIFFICULTY=='n'){
-            strcpy(DIFFICULTY_SPELLED_OUT,"Normal");
+            strcpy(COLOR_SPELLED_OUT,"Normal");
         }
 
-        strcat(LARGE_STRING,DIFFICULTY_SPELLED_OUT);
+        strcat(LARGE_STRING,COLOR_SPELLED_OUT);
 
         attrset(GOLD_COLORED_CELL);
 
@@ -1543,40 +1747,239 @@ void OPEN_DIFFICULTY_MENU() {//
 
     if(GLOBAL_IS_GUEST==FALSE) {//write final result in file
 
+        FILE* SETTINGS_FILE=fopen("user_settings.txt","r");
 
+        char TEMP_STRING[100000];
 
+        fgets(TEMP_STRING,100000,SETTINGS_FILE);
 
+        char *PTR=strstr(TEMP_STRING,GLOBAL_LOGGED_IN_USER); 
 
+        PTR+=strlen(GLOBAL_LOGGED_IN_USER)+1;//move PTR to first char location w s n
+
+        PTR[4]=GLOBAL_SETTINGS.DIFFICULTY;
+
+        fclose(SETTINGS_FILE);
+
+        FILE *WRITE_MODE_PTR=fopen("user_settings.txt","w");
+
+        fprintf(WRITE_MODE_PTR,"%s",TEMP_STRING);
+
+        fclose(WRITE_MODE_PTR); 
 
     }
 
 
 }
-void OPEN_HERO_COLOR_MENU() {//
+void OPEN_HERO_COLOR_MENU() {
     
     PRINT_COLOR_GUI();
 
-    if(GLOBAL_IS_GUEST==TRUE) {
+    while(TRUE) {
 
+        int x,y;
 
+        getyx(stdscr,y,x);
 
+        char LARGE_STRING[70]="Current Color is : ";
 
+        char COLOR_SPELLED_OUT[10];
 
+        if(GLOBAL_SETTINGS.HERO_COLOR=='r') {
+            strcpy(COLOR_SPELLED_OUT,"Red");
+        }
+        else if(GLOBAL_SETTINGS.HERO_COLOR=='b') {
+            strcpy(COLOR_SPELLED_OUT,"Blue");
+        }
+        else if(GLOBAL_SETTINGS.HERO_COLOR=='g'){
+            strcpy(COLOR_SPELLED_OUT,"Green");
+        }
+
+        strcat(LARGE_STRING,COLOR_SPELLED_OUT);
+
+        attrset(GOLD_COLORED_CELL);
+
+        mvprintw(1,COLUMN/2-36 ,"                                                                        ");
+
+        mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
+
+        attroff(GOLD_COLORED_CELL);
+
+        int INPUT=getch();
+
+        if(y==ROW/5) {
+
+            if(INPUT==KEY_DOWN) {
+
+                attron(RED_COLORED_CELL);
+
+                mvprintw(ROW/5, COLUMN/2 -2 ,"Red");
+
+                attroff(RED_COLORED_CELL);
+
+                attrset(GREEN_HIGHLIGHT | A_BLINK);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Green");
+
+                attroff(GREEN_HIGHLIGHT); attrset(A_BLINK);                
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+
+                GLOBAL_SETTINGS.HERO_COLOR='r';
+
+                move(ROW/5,0);
+
+            }
+            else {
+                move(ROW/5,0);
+            }
+
+        }
+        else if(y==2*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GREEN_COLORED_CELL);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Green");
+
+                attroff(GREEN_COLORED_CELL);
+
+                attrset(RED_HIGHLIGHT | A_BLINK);
+
+                mvprintw(ROW/5, COLUMN/2 -2 ,"Red");
+
+                attroff(RED_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(GREEN_COLORED_CELL);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Green");
+
+                attroff(GREEN_COLORED_CELL);
+
+                attrset(BLUE_HIGHLIGHT | A_BLINK);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Blue");
+
+                attroff(BLUE_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                GLOBAL_SETTINGS.HERO_COLOR='g';
+
+                move(2*ROW/5,0);
+            }
+            else {
+                move(2*ROW/5,0);
+            }
+        }
+        else if(y==3*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(BLUE_COLORED_CELL);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Blue");
+
+                attroff(BLUE_COLORED_CELL);
+
+                attrset(GREEN_HIGHLIGHT | A_BLINK);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Green");
+
+                attroff(GREEN_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(BLUE_COLORED_CELL);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Blue");
+
+                attroff(BLUE_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                GLOBAL_SETTINGS.HERO_COLOR='b';
+
+                move(3*ROW/5,0);
+            }
+            else {
+                move(3*ROW/5,0);
+            }
+        }
+        else {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(BLUE_HIGHLIGHT | A_BLINK);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Blue");
+
+                attroff(BLUE_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                
+                break;
+
+            }
+            else {
+                move(4*ROW/5,0);
+            }
+        }
 
     }
 
-    else {
-        
+    if(GLOBAL_IS_GUEST==FALSE) {//write final result in file
 
+        FILE* SETTINGS_FILE=fopen("user_settings.txt","r");
 
+        char TEMP_STRING[100000];
 
+        fgets(TEMP_STRING,100000,SETTINGS_FILE);
+
+        char *PTR=strstr(TEMP_STRING,GLOBAL_LOGGED_IN_USER); 
+
+        PTR+=strlen(GLOBAL_LOGGED_IN_USER)+1;//move PTR to first char location g s n
+
+        PTR[0]=GLOBAL_SETTINGS.HERO_COLOR;
+
+        fclose(SETTINGS_FILE);
+
+        FILE *WRITE_MODE_PTR=fopen("user_settings.txt","w");
+
+        fprintf(WRITE_MODE_PTR,"%s",TEMP_STRING);
+
+        fclose(WRITE_MODE_PTR); 
 
     }
-
-
-
-
-
 
 
 }
@@ -1589,39 +1992,61 @@ void HANDLE_GUEST_USER() {
     GLOBAL_SETTINGS.MUSIC='s'; //sleep away, rick roll, maid with the flaxen hair
 
 }
-void PRINT_COLOR_GUI() {////////////////
+void PRINT_COLOR_GUI() {
 
     clear();
 
-    attron(COLOR_PAIR(3));
+    noecho();
 
-    mvprintw(2*ROW/5, COLUMN/2 -2 ,"Red");
+    curs_set(0);
 
-    attroff(COLOR_PAIR(3));
+    attrset(GOLD_COLORED_CELL);
 
-    attron(COLOR_PAIR(4));
+    char LARGE_STRING[70]="Current Color is : ";
 
-    mvprintw(3*ROW/5,COLUMN/2 -3,"Green");
+    char COLOR_SPELLED_OUT[10];
 
-    attroff(COLOR_PAIR(4));
+    if(GLOBAL_SETTINGS.HERO_COLOR=='r') {
+        strcpy(COLOR_SPELLED_OUT,"Red");
+    }
+    else if(GLOBAL_SETTINGS.HERO_COLOR=='g') {
+        strcpy(COLOR_SPELLED_OUT,"Green");
+    }
+    else if(GLOBAL_SETTINGS.HERO_COLOR=='b'){
+        strcpy(COLOR_SPELLED_OUT,"Blue");
+    }
 
-    attron(COLOR_PAIR(5));
+    strcat(LARGE_STRING,COLOR_SPELLED_OUT);
 
-    mvprintw(4*ROW/5, COLUMN/2 -2,"Blue");
+    mvprintw(1,COLUMN/2-36 ,"                                                                        ");
 
-    attroff(COLOR_PAIR(5));
+    mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
 
-    attron(COLOR_PAIR(1));
+    attroff(GOLD_COLORED_CELL);
 
-    mvprintw(ROW-1,COLUMN/2 - 22,"Press e or E to Select and Arrow keys to Move");
+    attron(GREEN_COLORED_CELL);
 
-    attroff(COLOR_PAIR(1));
+    mvprintw(2*ROW/5,COLUMN/2 -3,"Green");
 
-    attron(COLOR_PAIR(11) | A_BLINK);
+    attroff(GREEN_COLORED_CELL);
 
-    mvprintw(ROW/5,COLUMN/2 -3 ,"White");
+    attron(BLUE_COLORED_CELL);
 
-    attroff(COLOR_PAIR(11)); attroff(A_BLINK);
+    mvprintw(3*ROW/5, COLUMN/2 -2,"Blue");
+
+    attroff(BLUE_COLORED_CELL);
+
+    attron(GOLD_COLORED_CELL);
+
+    mvprintw(4*ROW/5,COLUMN/2 -2 ,"Back");
+
+    attroff(GOLD_COLORED_CELL); 
+
+    attron(RED_HIGHLIGHT | A_BLINK);
+
+    mvprintw(ROW/5, COLUMN/2 -2 ,"Red");
+
+    attroff(RED_HIGHLIGHT); attroff(A_BLINK);
 
     refresh();
 
@@ -1682,19 +2107,19 @@ void PRINT_DIFFICULTY_MENU() {
 
     char LARGE_STRING[70]="Current Difficulty is : ";
 
-    char DIFFICULTY_SPELLED_OUT[10];
+    char COLOR_SPELLED_OUT[10];
 
     if(GLOBAL_SETTINGS.DIFFICULTY=='h') {
-        strcpy(DIFFICULTY_SPELLED_OUT,"Hard");
+        strcpy(COLOR_SPELLED_OUT,"Hard");
     }
     else if(GLOBAL_SETTINGS.DIFFICULTY=='e') {
-        strcpy(DIFFICULTY_SPELLED_OUT,"Easy");
+        strcpy(COLOR_SPELLED_OUT,"Easy");
     }
     else if(GLOBAL_SETTINGS.DIFFICULTY=='n'){
-        strcpy(DIFFICULTY_SPELLED_OUT,"Normal");
+        strcpy(COLOR_SPELLED_OUT,"Normal");
     }
 
-    strcat(LARGE_STRING,DIFFICULTY_SPELLED_OUT);
+    strcat(LARGE_STRING,COLOR_SPELLED_OUT);
 
     attrset(GOLD_COLORED_CELL);
 
@@ -1718,7 +2143,51 @@ void PRINT_DIFFICULTY_MENU() {
 
 }
 
+void PRINT_MUSIC_MENU() {
 
+    clear();        ////////////////////////////////////////////////////////////////////////
+
+    noecho();
+
+    curs_set(0);
+
+    char LARGE_STRING[70]="Current Music is : ";
+
+    char COLOR_SPELLED_OUT[100];
+
+    if(GLOBAL_SETTINGS.MUSIC=='s') {
+        strcpy(COLOR_SPELLED_OUT,"Sleep Away");
+    }
+    else if(GLOBAL_SETTINGS.MUSIC=='m') {
+        strcpy(COLOR_SPELLED_OUT,"Maid With The Flaxen Hair");
+    }
+    else if(GLOBAL_SETTINGS.MUSIC=='r'){
+        strcpy(COLOR_SPELLED_OUT,"Never Gonna Give You Up");
+    }
+
+    strcat(LARGE_STRING,COLOR_SPELLED_OUT);
+
+    attrset(GOLD_COLORED_CELL);
+
+    mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
+
+    mvprintw(2*ROW/5,COLUMN/2 -5 ,"Sleep Away");
+
+    mvprintw(3*ROW/5,COLUMN/2 -13,"Maid With The Flaxen Hair");
+
+    mvprintw(4*ROW/5, COLUMN/2 -2,"Back");
+
+    attroff(GOLD_COLORED_CELL);
+
+    attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+    mvprintw(ROW/5, COLUMN/2 -12 ,"Never Gonna Give You Up");
+
+    attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+    refresh();
+
+}
 
 
 
