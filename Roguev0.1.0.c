@@ -131,7 +131,7 @@ COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT [38][144]);
 
 int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
 
-void GENERATE_ANCIENT_KEY(POINT [38][144]);   //<----------------EVIL !!!
+void GENERATE_ANCIENT_KEY(POINT [38][144]);   
 
 
 
@@ -145,11 +145,11 @@ int PROCESS_PLAYER_INPUT(int, POINT [4][38][144], char *);
 
 void PRINT_MAP_ON_SCREEN(POINT [4][38][144]);
 
+void UPDATE_EXPLORATION(POINT [4][38][144]);
 
+void REVEAL_ENTIRE_SECTOR(POINT [4][38][144],int );
 
-
-
-
+void REVEAL_CORRIDORS(POINT [4][38][144]);
 
 
 
@@ -199,15 +199,13 @@ int main() {
     PRE_GAME_MENU();
 
     POINT MAP[4][38][144];
-    
-    //4 floors, each floor has 38 rows and 144 columns . struct point is defined for easier tracking of exploration
 
     if(GLOBAL_LOAD_SAVE==TRUE) {//load from save onto MAP
 
         LOAD_MAP(MAP);//load map, exploration progress and player location onto global variables
 
     }
-    else {//create new map from scratch
+    else {
 
         GENERATE_MAP(MAP);   
 
@@ -216,17 +214,17 @@ int main() {
     //determine max player HP based on difficulty
 
     
-    unsigned long long int START_TIME=time(NULL); //enable time-out delay below :
+    unsigned long long int START_TIME=time(NULL); 
 
     halfdelay(10); //1 sec delay
 
-    char TRANSITION_STORAGE='.'; //storage for swapping hero position and map objects
-
-    PRINT_MAP_ON_SCREEN(MAP);
+    char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION(MAP);    PRINT_MAP_ON_SCREEN(MAP);
 
     while(GLOBAL_EXIT_CODE==0) {//game loop
 
     HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
+
+    UPDATE_EXPLORATION(MAP);
 
     //HANDLE BACKGROUND TIMERS.
 
@@ -2992,6 +2990,8 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//
 
         PROCESS_PLAYER_INPUT(USER_INPUT,MAP, TEMP_PTR);
 
+        
+
     }
 
     else if(USER_INPUT==KEY_BACKSPACE) {//open pause menu
@@ -3345,7 +3345,20 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
             break;
         }
 
+        case KEY_RIGHT : {//deeper into a a dungeon
 
+
+
+            break; 
+        }
+
+        case KEY_LEFT : {//back a floor
+
+
+
+
+            break;
+        }
 
 
 
@@ -3371,7 +3384,10 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
     for(int i=0 ; i<38 ; i++) {
 
         for(int j=0 ; j<144 ; j++) {
-            printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+            if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_DISCOVERED==1)
+                printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+            else
+                printw(" ");
         }
 
     }
@@ -3383,3 +3399,90 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
     refresh();
 
 }
+
+void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
+
+    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='.') {//reveal entire room
+
+        REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD));
+
+    }
+
+    else if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='+' 
+
+    ||  MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='#')
+
+    {//start revealing corridors
+
+        REVEAL_CORRIDORS(MAP);
+
+    }
+
+
+}
+
+
+void REVEAL_ENTIRE_SECTOR(POINT MAP[4][38][144],int SECTOR) {
+
+    SECTOR--;
+
+    for(int i=(SECTOR/3)*19; i<19+(SECTOR/3)*19 ; i++) {
+
+        for(int j=(SECTOR%3)*48 ; j<(SECTOR%3)*48+48 ; j++) {
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL!='#') {
+
+                MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_DISCOVERED=1;
+
+            }
+        }
+    }
+}
+
+void REVEAL_CORRIDORS(POINT MAP[4][38][144]) {//
+
+    for(int i=0 ; i<=5 ; i++) {
+
+        for(int j=0 ; j<=i ; j++) {
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+i-j][GLOBAL_PLAYER_X_COORD+j].SYMBOL=='#'
+            
+            || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+i-j][GLOBAL_PLAYER_X_COORD+j].SYMBOL=='+') {
+
+                MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+i-j][GLOBAL_PLAYER_X_COORD+j].IS_DISCOVERED=1;
+
+            }
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-(i-j)][GLOBAL_PLAYER_X_COORD+j].SYMBOL=='#'
+            
+            || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-(i-j)][GLOBAL_PLAYER_X_COORD+j].SYMBOL=='+') {
+
+                MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-(i-j)][GLOBAL_PLAYER_X_COORD+j].IS_DISCOVERED=1;
+
+            }
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-(i-j)][GLOBAL_PLAYER_X_COORD-j].SYMBOL=='#'
+            
+            || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-(i-j)][GLOBAL_PLAYER_X_COORD-j].SYMBOL=='+') {
+
+                MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-(i-j)][GLOBAL_PLAYER_X_COORD-j].IS_DISCOVERED=1;
+
+            }
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+i-j][GLOBAL_PLAYER_X_COORD-j].SYMBOL=='#'
+            
+            || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+i-j][GLOBAL_PLAYER_X_COORD-j].SYMBOL=='+') {
+
+                MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+i-j][GLOBAL_PLAYER_X_COORD-j].IS_DISCOVERED=1;
+
+            }
+
+        }
+
+    } 
+
+}
+
+
+
+
