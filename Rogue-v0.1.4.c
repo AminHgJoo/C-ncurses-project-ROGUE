@@ -5,6 +5,10 @@
 #include <time.h>
 #include <locale.h>
 #include <math.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
+
+
 #define RED_COLORED_CELL COLOR_PAIR(3)
 #define GREEN_COLORED_CELL COLOR_PAIR(4)
 #define GOLD_COLORED_CELL COLOR_PAIR(1)
@@ -88,6 +92,8 @@ int GLOBAL_PLAYER_Y_COORD;
 int GLOBAL_PLAYER_FLOOR=0;  //note : floor numbers are the array index, actual floors are one higher
 
 int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_of_game exit, 3 is saved and quit
+
+int GLOBAL_SHOW_ALL=FALSE;
 
 
 void HANDLE_GUEST_USER();
@@ -3046,6 +3052,17 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             }
 
+            else if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL=='='
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='#'
+
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='+') 
+            {
+
+                REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD)-3);
+
+            }
+
 
             break;
         }
@@ -3073,6 +3090,17 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
                 *TEMP_PTR=MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].SYMBOL;
 
                 MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].SYMBOL='H';
+
+            }
+
+            else if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL=='='
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='#'
+
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='+')
+            {
+
+                REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD)+1);
 
             }
 
@@ -3105,6 +3133,19 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             }
 
+            else if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL=='='
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='#'
+
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='+'
+            
+            )
+            {
+
+                REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD)-1);
+
+            }
+
             break;
         }
 
@@ -3131,6 +3172,17 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
                 *TEMP_PTR=MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].SYMBOL;
 
                 MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].SYMBOL='H';
+
+            }
+
+            else if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL=='='
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='#'
+
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='+' 
+            ) {
+
+                REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD)+3);
 
             }
 
@@ -3428,6 +3480,33 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
             break;
         }
 
+        case 'm' : {
+
+            if(GLOBAL_SHOW_ALL==FALSE) {
+                GLOBAL_SHOW_ALL=TRUE;
+            }
+            else {
+                GLOBAL_SHOW_ALL=FALSE;
+            }
+
+            break;
+        }
+
+        case 'M' : {
+
+            if(GLOBAL_SHOW_ALL==FALSE) {
+                GLOBAL_SHOW_ALL=TRUE;
+            }
+            else {
+                GLOBAL_SHOW_ALL=FALSE;
+            }
+
+            break;
+        }
+
+
+
+
 
 
     }
@@ -3452,10 +3531,20 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
     for(int i=0 ; i<38 ; i++) {
 
         for(int j=0 ; j<144 ; j++) {
-            if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_DISCOVERED==1)
+
+            if(GLOBAL_SHOW_ALL==FALSE) {
+                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_DISCOVERED==1)
+                    printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+                else
+                    printw(" ");
+            }
+
+            else {
+
                 printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
-            else
-                printw(" ");
+
+            }
+
         }
 
     }
@@ -3472,15 +3561,19 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
 
 void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
 
-    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='.' 
+    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='+' 
     
-    || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='<') {//reveal entire room
+    || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='<'
+    
+    || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='.'
+
+    ) {//reveal entire room
 
         REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD));
 
     }
 
-    else if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='+' 
+    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='+' 
 
     ||  MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='#')
 
