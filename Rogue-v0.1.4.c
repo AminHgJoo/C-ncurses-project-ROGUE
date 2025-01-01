@@ -149,7 +149,7 @@ void UPDATE_EXPLORATION(POINT [4][38][144]);
 
 void REVEAL_ENTIRE_SECTOR(POINT [4][38][144],int );
 
-void REVEAL_CORRIDORS(POINT [4][38][144], char,int ,int ,int );
+void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
 
 
 
@@ -1428,8 +1428,6 @@ void LOAD_MAP(POINT MAP[4][38][144]) {//
 
 void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
-    POINT *ENTRY_POINT, *EXIT_POINT;
-
     int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1);
 
     NEXT_START=GENERATE_FLOOR_SKELETON(MAP[1],NEXT_START);
@@ -1444,28 +1442,32 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
             if(MAP[0][i][j].IS_START==1) {
 
-                ENTRY_POINT=&MAP[0][i][j];
-
                 GLOBAL_PLAYER_X_COORD=j;
 
                 GLOBAL_PLAYER_Y_COORD=i;
+
+                MAP[0][i][j].SYMBOL='H';
+
+                MAP[0][i][j].REAL_CONTENTS='.';
+
+                MAP[0][i][j].IS_START=0;
 
             }
 
             if(MAP[3][i][j].IS_START==-1) {
 
-                EXIT_POINT=&MAP[3][i][j];
+                MAP[3][i][j].SYMBOL='x';
+
+                MAP[3][i][j].REAL_CONTENTS='x';
+
+                MAP[3][i][j].IS_START=0;
 
             }
 
         }
     }
 
-    ENTRY_POINT->SYMBOL='H';
-
-    ENTRY_POINT->REAL_CONTENTS='.';
-
-    EXIT_POINT->SYMBOL='X';                         
+                          
 
     
 
@@ -1483,6 +1485,8 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
             FLOOR[i][j].IS_DISCOVERED=0;
 
             FLOOR[i][j].SYMBOL=' ';
+
+            FLOOR[i][j].IS_START=0;
 
         }
 
@@ -3347,14 +3351,78 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
         case KEY_RIGHT : {//deeper into a a dungeon
 
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].IS_START==-1) {
 
+                GLOBAL_PLAYER_FLOOR++;
+
+                int BREAK=0;
+
+                for(int i=0 ; i<38 ; i++) {
+
+                    for(int j=0 ; j<144 ; j++) {
+
+                        if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_START==1) {
+
+                            GLOBAL_PLAYER_Y_COORD=i;
+
+                            GLOBAL_PLAYER_X_COORD=j;
+
+                            BREAK++;
+
+                            break;
+                        }
+
+                    }
+
+                    if(BREAK==1) {
+
+                        break;
+                    }
+
+                }
+
+                MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].SYMBOL='H';
+
+            }
 
             break; 
         }
 
         case KEY_LEFT : {//back a floor
 
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].IS_START==1) {
 
+                GLOBAL_PLAYER_FLOOR--;
+
+                int BREAK=0;
+
+                for(int i=0 ; i<38 ; i++) {
+
+                    for(int j=0 ; j<144 ; j++) {
+
+                        if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_START==-1) {
+
+                            GLOBAL_PLAYER_Y_COORD=i;
+
+                            GLOBAL_PLAYER_X_COORD=j;
+
+                            BREAK++;
+
+                            break;
+                        }
+
+                    }
+
+                    if(BREAK==1) {
+
+                        break;
+                    }
+
+                }
+
+                MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].SYMBOL='H';
+
+            }
 
 
             break;
@@ -3394,6 +3462,8 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
 
     attroff(WHITE_COLORED_CELL);
 
+    mvprintw(ROW-1,0,"Floor :%d",GLOBAL_PLAYER_FLOOR+1);
+
     move(0,0);
 
     refresh();
@@ -3402,7 +3472,9 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
 
 void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
 
-    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='.') {//reveal entire room
+    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='.' 
+    
+    || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='<') {//reveal entire room
 
         REVEAL_ENTIRE_SECTOR(MAP,GIVE_SECTOR_NUMBER(GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD));
 
@@ -3414,7 +3486,7 @@ void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
 
     {//start revealing corridors
 
-        REVEAL_CORRIDORS(MAP,0,6,GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD);
+        REVEAL_HALLWAYS(MAP,0,6,GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD);
 
     }
 
@@ -3439,7 +3511,7 @@ void REVEAL_ENTIRE_SECTOR(POINT MAP[4][38][144],int SECTOR) {
     }
 }
 
-void REVEAL_CORRIDORS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES_LEFT , int CURSOR_X , int CURSOR_Y) {//
+void REVEAL_HALLWAYS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES_LEFT , int CURSOR_X , int CURSOR_Y) {//
 
     if(MOVES_LEFT!=0) {
 
@@ -3465,7 +3537,7 @@ void REVEAL_CORRIDORS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES
     
         ) {
 
-            REVEAL_CORRIDORS(MAP,'l',MOVES_LEFT-1,CURSOR_X+1,CURSOR_Y);
+            REVEAL_HALLWAYS(MAP,'l',MOVES_LEFT-1,CURSOR_X+1,CURSOR_Y);
 
         }
 
@@ -3479,7 +3551,7 @@ void REVEAL_CORRIDORS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES
     
         ) {
 
-            REVEAL_CORRIDORS(MAP,'r',MOVES_LEFT-1,CURSOR_X-1,CURSOR_Y);
+            REVEAL_HALLWAYS(MAP,'r',MOVES_LEFT-1,CURSOR_X-1,CURSOR_Y);
 
         }
 
@@ -3493,7 +3565,7 @@ void REVEAL_CORRIDORS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES
     
         ) {
 
-            REVEAL_CORRIDORS(MAP,'u',MOVES_LEFT-1,CURSOR_X,CURSOR_Y+1);
+            REVEAL_HALLWAYS(MAP,'u',MOVES_LEFT-1,CURSOR_X,CURSOR_Y+1);
 
         }
 
@@ -3507,16 +3579,12 @@ void REVEAL_CORRIDORS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES
     
         ) {
 
-            REVEAL_CORRIDORS(MAP,'d',MOVES_LEFT-1,CURSOR_X,CURSOR_Y-1);
+            REVEAL_HALLWAYS(MAP,'d',MOVES_LEFT-1,CURSOR_X,CURSOR_Y-1);
 
         }
 
 
     }
-
-
-
-
 
 }
 
