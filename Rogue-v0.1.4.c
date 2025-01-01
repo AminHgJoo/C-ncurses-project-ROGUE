@@ -44,7 +44,7 @@ typedef struct settings {
 
     char HERO_COLOR;
 
-    char MUSIC[50];
+    char MUSIC;
 
     char DIFFICULTY;
 
@@ -75,7 +75,7 @@ typedef struct coords {
 
 
 
-SETTINGS GLOBAL_GUEST_SETTINGS;
+SETTINGS GLOBAL_SETTINGS;
 
 int GLOBAL_LOAD_SAVE=FALSE;
 
@@ -114,6 +114,12 @@ void OPEN_MUSIC_MENU();
 void OPEN_DIFFICULTY_MENU();
 void OPEN_HERO_COLOR_MENU();
 void PRINT_COLOR_GUI();
+void LOAD_USER_SETTINGS();
+void HANDLE_SETTINGS();
+void PRINT_DIFFICULTY_MENU();
+
+
+
 
 
 
@@ -200,9 +206,9 @@ int main() {
 
     HANDLE_NEXT_MENUS(NEXT_MENU);
 
-    HANDLE_GUEST_USER();
+    HANDLE_SETTINGS();
 
-    PRE_GAME_MENU();
+    PRE_GAME_MENU();//settings menu must update settings in .txt file and live in game.if user is guest, don't write in .txt file
 
     POINT MAP[4][38][144];
 
@@ -347,7 +353,6 @@ char GAME_STARTUP_MENU() {
 
     while(TRUE);
 }
-
 void HANDLE_NEXT_MENUS(char NEXT_MENU) {
 
     if(NEXT_MENU=='r') {
@@ -690,7 +695,7 @@ void USER_REGISTERATION() {
 
     FILE *SETTINGS=fopen("user_settings.txt","a+");
 
-    fprintf(SETTINGS,"%s w default n\n",USERNAME);
+    fprintf(SETTINGS,"%s w s n\n",USERNAME);
 
     fclose(SETTINGS);
 
@@ -768,6 +773,8 @@ int USER_LOGIN() {
 
             RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
 
+            curs_set(0);
+
             mvprintw(ROW/3 +3 ,COLUMN/2 -26,"Temporary Login Successful. Press a Key to Continue.");
 
             refresh();
@@ -817,6 +824,7 @@ int USER_LOGIN() {
         }
 
         fscanf(USER_PASSWORD_LIST," %s",CORRECT_PASSWORD);
+
         break;
     }
     
@@ -892,7 +900,6 @@ void CLEAR_TEXT_FOR_LOGIN_ERRORS() {
 
     attron(COLOR_PAIR(3));
 }
-
 void RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR() {
 
     attroff(COLOR_PAIR(3));
@@ -942,8 +949,6 @@ int VALIDATE_EMAIL(char EMAIL[]) {
 int PRE_GAME_MENU() {
 
     PRINT_PREGAME_MENU();
-
-    
 
     while(TRUE) {
 
@@ -1105,6 +1110,7 @@ int PRE_GAME_MENU() {
 
 }
 void PRINT_PREGAME_MENU() {
+
     clear();
 
     noecho();
@@ -1135,22 +1141,28 @@ void PRINT_PREGAME_MENU() {
 
     refresh();
 }
-void OPEN_LEADERBOARDS() {//print and sort scores. if user is guest do not search for their ranking
+void OPEN_LEADERBOARDS() {///////////////
     
-    if(GLOBAL_IS_GUEST==TRUE) {
+    FILE* SCORES_FILE=fopen("user_scores.txt","r");
+
+
+
+
+
+
+
+
+
+    if(GLOBAL_IS_GUEST==FALSE) {//show non-guest users' ranking
+
 
 
     }
 
-    else {
-
-
-
-
-    }    
+    fclose(SCORES_FILE);
 
 }
-void OPEN_SETTINGS() {///////////////
+void OPEN_SETTINGS() {
 
     PRINT_SETTINGS_MENU();
 
@@ -1342,13 +1354,203 @@ void OPEN_MUSIC_MENU() {//
     }
 }
 void OPEN_DIFFICULTY_MENU() {//
-    if(GLOBAL_IS_GUEST==TRUE) {
+
+    PRINT_DIFFICULTY_MENU();
+
+    while(TRUE) {
+
+        int x,y;
+
+        getyx(stdscr,y,x);
+
+        char LARGE_STRING[70]="Current Difficulty is : ";
+
+        char DIFFICULTY_SPELLED_OUT[10];
+
+        if(GLOBAL_SETTINGS.DIFFICULTY=='h') {
+            strcpy(DIFFICULTY_SPELLED_OUT,"Hard");
+        }
+        else if(GLOBAL_SETTINGS.DIFFICULTY=='e') {
+            strcpy(DIFFICULTY_SPELLED_OUT,"Easy");
+        }
+        else if(GLOBAL_SETTINGS.DIFFICULTY=='n'){
+            strcpy(DIFFICULTY_SPELLED_OUT,"Normal");
+        }
+
+        strcat(LARGE_STRING,DIFFICULTY_SPELLED_OUT);
+
+        attrset(GOLD_COLORED_CELL);
+
+        mvprintw(1,COLUMN/2-36 ,"                                                                        ");
+
+        mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
+
+        attroff(GOLD_COLORED_CELL);
+
+        int INPUT=getch();
+
+        if(y==ROW/5) {
+
+            if(INPUT==KEY_DOWN) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(ROW/5, COLUMN/2 -2 ,"Easy");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Normal");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);                
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+
+                GLOBAL_SETTINGS.DIFFICULTY='e';
+
+                move(ROW/5,0);
+
+            }
+            else {
+                move(ROW/5,0);
+            }
+
+        }
+        else if(y==2*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Normal");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(ROW/5, COLUMN/2 -2 ,"Easy");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Normal");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Hard");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                GLOBAL_SETTINGS.DIFFICULTY='n';
+
+                move(2*ROW/5,0);
+            }
+            else {
+                move(2*ROW/5,0);
+            }
+        }
+        else if(y==3*ROW/5) {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Hard");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(2*ROW/5, COLUMN/2 -3 ,"Normal");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT==KEY_DOWN) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Hard");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                GLOBAL_SETTINGS.DIFFICULTY='h';
+
+                move(3*ROW/5,0);
+            }
+            else {
+                move(3*ROW/5,0);
+            }
+        }
+        else {
+
+            if(INPUT==KEY_UP) {
+
+                attron(GOLD_COLORED_CELL);
+
+                mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
+
+                attroff(GOLD_COLORED_CELL);
+
+                attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+                mvprintw(3*ROW/5, COLUMN/2 -2 ,"Hard");
+
+                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+                refresh();
+
+            }
+            else if(INPUT=='e' || INPUT=='E') {
+                
+                break;
+
+            }
+            else {
+                move(4*ROW/5,0);
+            }
+        }
+
+        
 
     }
 
-    else {
+    if(GLOBAL_IS_GUEST==FALSE) {//write final result in file
+
+
+
+
+
 
     }
+
+
 }
 void OPEN_HERO_COLOR_MENU() {//
     
@@ -1380,15 +1582,11 @@ void OPEN_HERO_COLOR_MENU() {//
 }
 void HANDLE_GUEST_USER() {
 
-    if(GLOBAL_IS_GUEST==TRUE) {
+    GLOBAL_SETTINGS.DIFFICULTY='n';
 
-        GLOBAL_GUEST_SETTINGS.DIFFICULTY='n';
+    GLOBAL_SETTINGS.HERO_COLOR='w';
 
-        GLOBAL_GUEST_SETTINGS.HERO_COLOR='w';
-
-        strcpy(GLOBAL_GUEST_SETTINGS.MUSIC,"DEFAULT");
-
-    }
+    GLOBAL_SETTINGS.MUSIC='s'; //sleep away, rick roll, maid with the flaxen hair
 
 }
 void PRINT_COLOR_GUI() {////////////////
@@ -1428,6 +1626,105 @@ void PRINT_COLOR_GUI() {////////////////
     refresh();
 
 }
+
+void LOAD_USER_SETTINGS() {
+
+    FILE *SETTINGS_FILE=fopen("user_settings.txt","r");
+
+    char USER_FROM_FILE[20]; char DUMMY_VAR;
+
+    while(TRUE) {
+
+        fscanf(SETTINGS_FILE," %s",USER_FROM_FILE);
+
+        if(strcmp(USER_FROM_FILE,GLOBAL_LOGGED_IN_USER)==0) {
+
+            fscanf(SETTINGS_FILE," %c",&GLOBAL_SETTINGS.HERO_COLOR);
+
+            fscanf(SETTINGS_FILE," %c",&GLOBAL_SETTINGS.MUSIC);
+
+            fscanf(SETTINGS_FILE," %c",&GLOBAL_SETTINGS.DIFFICULTY);
+
+            break;
+
+        }
+
+        fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);    fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);    fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);
+
+    }
+
+    fclose(SETTINGS_FILE);
+
+}
+
+void HANDLE_SETTINGS() {
+
+    if(GLOBAL_IS_GUEST==TRUE) {
+
+        HANDLE_GUEST_USER();
+
+    }
+
+    else {
+
+        LOAD_USER_SETTINGS();
+
+    }
+}
+
+void PRINT_DIFFICULTY_MENU() {
+
+    clear();
+
+    noecho();
+
+    curs_set(0);
+
+    char LARGE_STRING[70]="Current Difficulty is : ";
+
+    char DIFFICULTY_SPELLED_OUT[10];
+
+    if(GLOBAL_SETTINGS.DIFFICULTY=='h') {
+        strcpy(DIFFICULTY_SPELLED_OUT,"Hard");
+    }
+    else if(GLOBAL_SETTINGS.DIFFICULTY=='e') {
+        strcpy(DIFFICULTY_SPELLED_OUT,"Easy");
+    }
+    else if(GLOBAL_SETTINGS.DIFFICULTY=='n'){
+        strcpy(DIFFICULTY_SPELLED_OUT,"Normal");
+    }
+
+    strcat(LARGE_STRING,DIFFICULTY_SPELLED_OUT);
+
+    attrset(GOLD_COLORED_CELL);
+
+    mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
+
+    mvprintw(2*ROW/5,COLUMN/2 -3 ,"Normal");
+
+    mvprintw(3*ROW/5,COLUMN/2 -2,"Hard");
+
+    mvprintw(4*ROW/5, COLUMN/2 -2,"Back");
+
+    attroff(GOLD_COLORED_CELL);
+
+    attrset(GOLD_HIGHLIGHT | A_BLINK);
+
+    mvprintw(ROW/5, COLUMN/2 -2 ,"Easy");
+
+    attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+
+    refresh();
+
+}
+
+
+
+
+
+
+
+
 void LOAD_MAP(POINT MAP[4][38][144]) {//
 
 }
@@ -1484,7 +1781,7 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
 int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOOR ONLY
     
-    for(int i=0 ; i<38 ; i++) {
+    for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, and IS_START.
 
         for(int j=0 ; j<144 ; j++) {
 
@@ -1944,6 +2241,15 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
 
     //generate non-secret random features(doors, windows, password doors and stairs, ...)
 
+    for(int i=0 ; i<38 ; i++) {//white color by default
+    
+        for(int j=0 ; j<144 ; j++) {
+
+            FLOOR[i][j].COLOR='w';
+
+        }
+    }
+
     DOOR RETURN_DOORS[14];
 
     CONNECT_ROOMS_AND_RETURN_DOORS(FLOOR,RETURN_DOORS);       //hallways doors and windows, and getting all doors.
@@ -2401,20 +2707,6 @@ void CONNECT_ROOMS_AND_RETURN_DOORS(POINT FLOOR[38][144], DOOR RETURN_DOORS[14])
     }
 
     //all doors now have been found and classified in terms of direction and sector. now to connect them.
-
-    //test :
-
-    /*  for(int k=0 ; k<14 ; k++) {
-
-        int i=RETURN_DOORS[k].y;
-
-        int j=RETURN_DOORS[k].x;
-
-        FLOOR[i][j].SYMBOL=RETURN_DOORS[k].DIRECTION;
-
-        }   */
-
-    //test end
 
     // 1r -> 2l & 1d -> 4u | 2r ->3l & 2d -> 5u | 3d ->6u | 4r -> 5l | 5r -> 6l //
 
@@ -3617,7 +3909,6 @@ void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
 
 
 }
-
 
 void REVEAL_ENTIRE_SECTOR(POINT MAP[4][38][144],int SECTOR) {
 
