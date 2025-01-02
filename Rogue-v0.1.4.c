@@ -31,7 +31,7 @@ typedef struct point {
     char REAL_CONTENTS; //conventions for unicode characters !!!!!!!!! to not get confused with genuine chars, negative ASCII values 
                                                     //will be recognized as potential unicode conventions.
                                                 
-    /* -1:Δ     -2:⚒️      -3:🗡️     -4:🪄     -5:➳     -6: ⚔️  */ /*Gold : $ | Food : ~ */
+    /* -1:Δ     -2:⚒️      -3:🗡️     -4:🪄     -5:A➳     -6: ⚔️  */ /*Gold : $ | Food : ~ */
 
     char IS_DISCOVERED;
 
@@ -120,7 +120,8 @@ void LOAD_USER_SETTINGS();
 void HANDLE_SETTINGS();
 void PRINT_DIFFICULTY_MENU();
 void PRINT_MUSIC_MENU();
-
+void PRINT_MESSAGE(char []);
+void CLEAR_MESSAGE_BAR();
 
 
 void TURN_OFF_COLOR_FOR_MAP_PRINT(char);
@@ -133,7 +134,7 @@ void LOAD_MAP(POINT [4][38][144]);
 
 void GENERATE_MAP(POINT [4][38][144]);
 
-int GENERATE_FLOOR_SKELETON(POINT [38][144], int );
+int GENERATE_FLOOR_SKELETON(POINT [38][144], int ,int );
 
 void CONNECT_ROOMS_AND_RETURN_DOORS(POINT [38][144], DOOR [14]);
 
@@ -278,6 +279,8 @@ int main() {
         //HANDLE BACKGROUND TIMERS.
 
         PRINT_MAP_ON_SCREEN(MAP);
+
+        CLEAR_MESSAGE_BAR();
 
     }   
 
@@ -2230,13 +2233,13 @@ void LOAD_MAP(POINT MAP[4][38][144]) {//
 
 void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
-    int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1);
+    int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1,1);
 
-    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[1],NEXT_START);
+    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[1],NEXT_START,2);
 
-    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[2],NEXT_START);
+    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[2],NEXT_START,3);
 
-    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[3],NEXT_START);
+    NEXT_START=GENERATE_FLOOR_SKELETON(MAP[3],NEXT_START,4);
 
     for(int i=0 ; i<38 ; i++) {//find and store game exit and start in 1st and 4th floors. Specify player start coords
 
@@ -2278,7 +2281,7 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
 }
 
-int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOOR ONLY
+int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUMBER) {////ONE FLOOR ONLY
     
     for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, COLOR, and IS_START.
 
@@ -2750,6 +2753,12 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
 
     GENERATE_PILLARS(FLOOR);    //fill pillars
 
+    //theme randomizer here.
+    
+    
+    
+    
+    
     //generate pickups, items & themes!!!!!!
 
     GENERATE_ANCIENT_KEY(FLOOR); //one ancient key per floor
@@ -2777,7 +2786,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
 
     int RANDOM_QUERRY=rand()%100+1; int SECRET_ROOM_SECTOR;
 
-     if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
+    if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
 
         while(TRUE) {
 
@@ -2913,9 +2922,53 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
 
     }
 
-    
+    //add traps and password doors later | password door is either reverse ordered or normal or has changing password
 
-    //add traps and password doors later
+    RANDOM_QUERRY=rand()%100+1;
+
+    if(RANDOM_QUERRY<=30) {//generate password door
+
+        RANDOM_QUERRY=rand()%3+1;
+
+        if(RANDOM_QUERRY==1 || FLOOR_NUMBER>=3) {//normal pass door with 1 or 2 passwords
+
+            if(FLOOR_NUMBER>=3) {
+
+
+
+
+
+            }
+
+            else {
+
+
+
+
+
+            }
+
+
+        }
+        else if(RANDOM_QUERRY==2) {//reverse ordered pass
+
+
+
+
+        }
+
+        else {//changing pass
+
+
+
+
+        }
+
+
+
+    }
+
+
 
 
 
@@ -3764,7 +3817,9 @@ void GENERATE_ANCIENT_KEY(POINT FLOOR[38][144]) {
 
         if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.') {
 
-            FLOOR[RAND_Y][RAND_X].SYMBOL='K'; // Placeholder Ancient Key Convention
+            FLOOR[RAND_Y][RAND_X].SYMBOL='k'; // Placeholder Ancient Key Convention
+
+            FLOOR[RAND_Y][RAND_X].COLOR='y';
 
             break;
 
@@ -3842,7 +3897,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!=' '
             
@@ -3891,7 +3946,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!=' '
             
@@ -3939,7 +3994,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!=' '
             
@@ -3989,7 +4044,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!=' '
             
@@ -4037,7 +4092,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!=' '
             
@@ -4049,7 +4104,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
             
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!=' '
             
@@ -4061,7 +4116,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD+1].SYMBOL!=' '
             
@@ -4090,7 +4145,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].SYMBOL!=' '
             
@@ -4102,7 +4157,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!=' '
             
@@ -4114,7 +4169,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD-1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD-1].SYMBOL!=' '
             
@@ -4143,7 +4198,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL!=' '
             
@@ -4155,7 +4210,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!=' '
             
@@ -4167,7 +4222,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD+1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD+1].SYMBOL!=' '
             
@@ -4196,7 +4251,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL!=' '
             
@@ -4208,7 +4263,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].SYMBOL!=' '
             
@@ -4220,7 +4275,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='=' 
             
-            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD-1].SYMBOL!='@' 
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD-1].REAL_CONTENTS!='@' 
 
             && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD-1].SYMBOL!=' '
             
@@ -4584,7 +4639,7 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
                         TURN_ON_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
 
-                        printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+                        mvprintw(i,j,"%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
 
                         TURN_OFF_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
 
@@ -4593,14 +4648,33 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
                         TURN_ON_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
 
-                        printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+                        if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL>0) {
+
+                            mvprintw(i,j,"%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                        }
+
+                        else {// special symbols////////more added later
+
+                            if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL==-1) {
+
+                                mvprintw(i,j,"Δ");
+
+                            }
+
+
+
+
+
+
+                        }
 
                         TURN_OFF_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
 
                     }
                 }
                 else
-                    printw(" ");
+                    mvprintw(i,j," ");
             }
 
             else {
@@ -4609,7 +4683,7 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
                     TURN_ON_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
 
-                    printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+                    mvprintw(i,j,"%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
 
                     TURN_OFF_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
 
@@ -4618,7 +4692,23 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
                     TURN_ON_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
 
-                    printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+                    if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL>0) {
+
+                        mvprintw(i,j,"%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                    }
+
+                    else {// special symbols////////more added later
+
+                        if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL==-1) {
+
+                            mvprintw(i,j,"Δ");
+
+                        }
+
+
+
+                    }
 
                     TURN_OFF_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
                 }
@@ -4836,3 +4926,14 @@ void TURN_OFF_COLOR_FOR_MAP_PRINT(char COLOR_TO_BE_OFFED) {
 
 }
 
+void PRINT_MESSAGE(char MESSAGE[]) {
+
+    mvprintw(0,0,"%s",MESSAGE);
+
+}
+
+void CLEAR_MESSAGE_BAR() {
+
+    mvprintw(0,0,"                                                                                       ");
+
+}
