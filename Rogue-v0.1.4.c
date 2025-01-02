@@ -35,6 +35,8 @@ typedef struct point {
 
     char IS_DISCOVERED;
 
+    char PASSWORD_DOOR_TYPE;// '1' '2' 't' 'r' 1, 2, time, reverse
+
     char COLOR; //y: yellow/golden, r :red , b: blue , w: white ///gold : treasure room
                 ////red : nightmare. blue: spell room. white : regular. 'o'(orange) for password door warning system
 
@@ -61,6 +63,8 @@ typedef struct door {
     int SECTOR;
 
     char DIRECTION;
+
+
 
 } DOOR;
 
@@ -176,17 +180,9 @@ void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
 
 int main() {
 
-    setlocale(LC_ALL, "");
+    setlocale(LC_ALL, "");  srand(time(NULL));
 
-    srand(time(NULL));
-
-    initscr();
-
-    noecho();
-
-    curs_set(0);
-
-    keypad(stdscr,TRUE);
+    initscr();  noecho();   curs_set(0);    keypad(stdscr,TRUE);
 
     getmaxyx(stdscr,ROW,COLUMN);
 
@@ -2281,9 +2277,9 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
 }
 
-int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUMBER) {////ONE FLOOR ONLY
+int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUMBER) {/////////
     
-    for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, COLOR, and IS_START.
+    for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, COLOR, IS_START, and passdoor type.
 
         for(int j=0 ; j<144 ; j++) {
 
@@ -2294,6 +2290,8 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
             FLOOR[i][j].IS_START=0;
 
             FLOOR[i][j].COLOR='w';
+
+            FLOOR[i][j].PASSWORD_DOOR_TYPE=0;
 
         }
 
@@ -2743,15 +2741,322 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     }
 
-    //generate non-secret random features(doors, windows, password doors and stairs, ...)
+    //generate non-secret random features
 
     DOOR RETURN_DOORS[14];
 
-    CONNECT_ROOMS_AND_RETURN_DOORS(FLOOR,RETURN_DOORS);       //hallways doors and windows, and getting all doors.
+    CONNECT_ROOMS_AND_RETURN_DOORS(FLOOR,RETURN_DOORS);       
 
-    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   //GENERATE ENTRY/EXIT FOR DUNGEON, RETURN EXIT SECTOR
+    int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   
 
     GENERATE_PILLARS(FLOOR);    //fill pillars
+
+    //password doors later | password door is either reverse ordered or normal or has changing password
+
+    int ANOTHER_RANDOM_QUERRY=rand()%100+1;
+
+    int PASSWORD_DOOR_EXISTS=FALSE;
+
+    int PASSWORD_DOOR_SECTOR;
+
+    if(ANOTHER_RANDOM_QUERRY<=40) {//generate password door 
+
+        ANOTHER_RANDOM_QUERRY=rand()%3+1;
+
+        if(ANOTHER_RANDOM_QUERRY==1 || FLOOR_NUMBER>=3) {//normal pass door with 1 or 2 passwords
+
+            if(FLOOR_NUMBER>=3) {//2 passes
+
+                int RAND_X,RAND_Y;
+
+                while(TRUE) {
+
+                    RAND_X=rand()%144; RAND_Y=rand()%38;
+
+                    if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.') {
+
+                        if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                    }
+
+                }
+
+                FLOOR[RAND_Y][RAND_X].SYMBOL='&';
+
+                FLOOR[RAND_Y][RAND_X].COLOR='y';
+
+                PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
+
+                while(TRUE) {
+
+                    RAND_X=rand()%144; RAND_Y=rand()%38;
+
+                    if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.' && GIVE_SECTOR_NUMBER(RAND_X,RAND_Y)==PASSWORD_DOOR_SECTOR && FLOOR[RAND_Y][RAND_X].SYMBOL!='&') {
+
+                        if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                    }
+
+                }
+
+                FLOOR[RAND_Y][RAND_X].SYMBOL='&';
+
+                FLOOR[RAND_Y][RAND_X].COLOR='y';
+
+                for(int k=0 ; k<14 ; k++) {
+
+                    if(RETURN_DOORS[k].SECTOR==PASSWORD_DOOR_SECTOR) {
+
+                        FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].SYMBOL='@';
+
+                        FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].COLOR='r';
+
+                        FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].PASSWORD_DOOR_TYPE='2';
+
+                        break;
+
+                    }
+
+                }
+
+            }
+
+            else {// 1 pass
+
+                int RAND_X,RAND_Y;
+
+                while(TRUE) {
+
+                    RAND_X=rand()%144; RAND_Y=rand()%38;
+
+                    if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.') {
+
+                        if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                        if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                        && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                            break;
+                        }
+
+                    }
+
+                }
+
+                FLOOR[RAND_Y][RAND_X].SYMBOL='&';
+
+                FLOOR[RAND_Y][RAND_X].COLOR='y';
+
+                PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
+
+                for(int k=0 ; k<14 ; k++) {
+
+                    if(RETURN_DOORS[k].SECTOR==PASSWORD_DOOR_SECTOR) {
+
+                        FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].SYMBOL='@';
+
+                        FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].COLOR='r';
+
+                        FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].PASSWORD_DOOR_TYPE='1';
+
+                        break;
+
+                    }
+
+                }
+
+            }
+
+        }
+        
+        else if(ANOTHER_RANDOM_QUERRY==2) {//reverse ordered pass
+
+            int RAND_X,RAND_Y;
+
+            while(TRUE) {
+
+                RAND_X=rand()%144; RAND_Y=rand()%38;
+
+                if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.') {
+
+                    if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                    if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                    if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                    if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                }
+
+            }
+
+            FLOOR[RAND_Y][RAND_X].SYMBOL='&';
+
+            FLOOR[RAND_Y][RAND_X].COLOR='y';
+
+            PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
+
+            for(int k=0 ; k<14 ; k++) {
+
+                if(RETURN_DOORS[k].SECTOR==PASSWORD_DOOR_SECTOR) {
+
+                    FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].SYMBOL='@';
+
+                    FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].COLOR='r';
+
+                    FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].PASSWORD_DOOR_TYPE='r';
+
+                    break;
+
+                }
+
+            }
+
+
+        }
+
+        else {//changing pass
+
+            int RAND_X,RAND_Y;
+
+            while(TRUE) {
+
+                RAND_X=rand()%144; RAND_Y=rand()%38;
+
+                if(FLOOR[RAND_Y][RAND_X].SYMBOL=='.') {
+
+                    if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                    if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y-1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y+1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                    if(FLOOR[RAND_Y][RAND_X-1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X+1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                    if(FLOOR[RAND_Y][RAND_X+1].SYMBOL=='|' && FLOOR[RAND_Y+1][RAND_X].SYMBOL=='_' 
+                        
+                    && FLOOR[RAND_Y-1][RAND_X].SYMBOL!='O' && FLOOR[RAND_Y][RAND_X-1].SYMBOL!='O' ) {
+                        break;
+                    }
+
+                }
+
+            }
+
+            FLOOR[RAND_Y][RAND_X].SYMBOL='&';
+
+            FLOOR[RAND_Y][RAND_X].COLOR='y';
+
+            PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
+
+            for(int k=0 ; k<14 ; k++) {
+
+                if(RETURN_DOORS[k].SECTOR==PASSWORD_DOOR_SECTOR) {
+
+                    FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].SYMBOL='@';
+
+                    FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].COLOR='r';
+
+                    FLOOR[RETURN_DOORS[k].y][RETURN_DOORS[k].x].PASSWORD_DOOR_TYPE='t';
+
+                    break;
+
+                }
+
+            }            
+
+        }
+
+        PASSWORD_DOOR_EXISTS=TRUE;
+
+    }
 
     //theme randomizer here.
     
@@ -2770,7 +3075,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     //end of non-secret gen------------------------------------------------------------------------------------
 
-      for(int i=0 ; i<38 ; i++) {
+    for(int i=0 ; i<38 ; i++) {
         for(int j=0 ; j<144 ; j++) { 
             FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
         }
@@ -2786,7 +3091,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     int RANDOM_QUERRY=rand()%100+1; int SECRET_ROOM_SECTOR;
 
-    if(RANDOM_QUERRY<=20) {//attempt to generate secret room at edges
+    if(RANDOM_QUERRY<=40 && PASSWORD_DOOR_EXISTS==FALSE) {//attempt to generate secret room at edges
 
         while(TRUE) {
 
@@ -2922,51 +3227,9 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     }
 
-    //add traps and password doors later | password door is either reverse ordered or normal or has changing password
+    //add traps
 
-    RANDOM_QUERRY=rand()%100+1;
-
-    if(RANDOM_QUERRY<=30) {//generate password door
-
-        RANDOM_QUERRY=rand()%3+1;
-
-        if(RANDOM_QUERRY==1 || FLOOR_NUMBER>=3) {//normal pass door with 1 or 2 passwords
-
-            if(FLOOR_NUMBER>=3) {
-
-
-
-
-
-            }
-
-            else {
-
-
-
-
-
-            }
-
-
-        }
-        else if(RANDOM_QUERRY==2) {//reverse ordered pass
-
-
-
-
-        }
-
-        else {//changing pass
-
-
-
-
-        }
-
-
-
-    }
+    
 
 
 
