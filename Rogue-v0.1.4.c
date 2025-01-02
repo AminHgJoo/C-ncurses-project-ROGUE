@@ -222,7 +222,34 @@ int main() {
 
     }
 
-    //determine max player HP based on difficulty
+    //determine max player HP based on difficulty////////////////////start playing music
+
+    SDL_Init(SDL_INIT_AUDIO);
+
+    Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
+
+    Mix_Music *music = NULL;
+
+    switch(GLOBAL_SETTINGS.MUSIC) {
+
+        case 'w' : 
+            music=Mix_LoadMUS("the_weeknd_sacrifice.mp3");
+
+            break;
+        case 's' :
+            music=Mix_LoadMUS("Sleep Away.mp3");
+            break;
+        case 'r' :
+            music=Mix_LoadMUS("Rick-Astley-Never-Gonna-Give-You-Up.mp3");
+            break;
+
+    }
+
+    Mix_PlayMusic(music, -1);
+
+
+
+
 
     
     unsigned long long int START_TIME=time(NULL); 
@@ -262,6 +289,12 @@ int main() {
     getch();
 
     endwin();
+
+    Mix_CloseAudio();
+
+    Mix_FreeMusic(music);
+
+    SDL_Quit();
 
     return 0;
 }
@@ -1345,7 +1378,7 @@ void PRINT_SETTINGS_MENU() {
     refresh();
 
 }
-void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
+void OPEN_MUSIC_MENU() {
 
     PRINT_MUSIC_MENU();
 
@@ -1362,8 +1395,8 @@ void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
         if(GLOBAL_SETTINGS.MUSIC=='s') {
             strcpy(COLOR_SPELLED_OUT,"Sleep Away");
         }
-        else if(GLOBAL_SETTINGS.MUSIC=='m') {
-            strcpy(COLOR_SPELLED_OUT,"Maid With The Flaxen Hair");
+        else if(GLOBAL_SETTINGS.MUSIC=='w') {
+            strcpy(COLOR_SPELLED_OUT,"Sacrifice");
         }
         else if(GLOBAL_SETTINGS.MUSIC=='r'){
             strcpy(COLOR_SPELLED_OUT,"Never Gonna Give You Up");
@@ -1439,7 +1472,7 @@ void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
 
                 attrset(GOLD_HIGHLIGHT | A_BLINK);
 
-                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+                mvprintw(3*ROW/5, COLUMN/2 -5 ,"Sacrifice");
 
                 attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
 
@@ -1461,7 +1494,7 @@ void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
 
                 attron(GOLD_COLORED_CELL);
 
-                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+                mvprintw(3*ROW/5, COLUMN/2 -5 ,"Sacrifice");
 
                 attroff(GOLD_COLORED_CELL);
 
@@ -1478,7 +1511,7 @@ void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
 
                 attron(GOLD_COLORED_CELL);
 
-                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+                mvprintw(3*ROW/5, COLUMN/2 -5 ,"Sacrifice");
 
                 attroff(GOLD_COLORED_CELL);
 
@@ -1492,7 +1525,7 @@ void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
 
             }
             else if(INPUT=='e' || INPUT=='E') {
-                GLOBAL_SETTINGS.MUSIC='m';
+                GLOBAL_SETTINGS.MUSIC='w';
 
                 move(3*ROW/5,0);
             }
@@ -1512,7 +1545,7 @@ void OPEN_MUSIC_MENU() {////////////////////////////////////////////////////////
 
                 attrset(GOLD_HIGHLIGHT | A_BLINK);
 
-                mvprintw(3*ROW/5, COLUMN/2 -13 ,"Maid With The Flaxen Hair");
+                mvprintw(3*ROW/5, COLUMN/2 -5 ,"Sacrifice");
 
                 attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
 
@@ -1987,9 +2020,9 @@ void HANDLE_GUEST_USER() {
 
     GLOBAL_SETTINGS.DIFFICULTY='n';
 
-    GLOBAL_SETTINGS.HERO_COLOR='w';
+    GLOBAL_SETTINGS.HERO_COLOR='g';
 
-    GLOBAL_SETTINGS.MUSIC='s'; //sleep away, rick roll, maid with the flaxen hair
+    GLOBAL_SETTINGS.MUSIC='s'; //sleep away, rick roll, sacrifice
 
 }
 void PRINT_COLOR_GUI() {
@@ -2145,7 +2178,7 @@ void PRINT_DIFFICULTY_MENU() {
 
 void PRINT_MUSIC_MENU() {
 
-    clear();        ////////////////////////////////////////////////////////////////////////
+    clear();        
 
     noecho();
 
@@ -2158,8 +2191,8 @@ void PRINT_MUSIC_MENU() {
     if(GLOBAL_SETTINGS.MUSIC=='s') {
         strcpy(COLOR_SPELLED_OUT,"Sleep Away");
     }
-    else if(GLOBAL_SETTINGS.MUSIC=='m') {
-        strcpy(COLOR_SPELLED_OUT,"Maid With The Flaxen Hair");
+    else if(GLOBAL_SETTINGS.MUSIC=='w') {
+        strcpy(COLOR_SPELLED_OUT,"Sacrifice");
     }
     else if(GLOBAL_SETTINGS.MUSIC=='r'){
         strcpy(COLOR_SPELLED_OUT,"Never Gonna Give You Up");
@@ -2173,7 +2206,7 @@ void PRINT_MUSIC_MENU() {
 
     mvprintw(2*ROW/5,COLUMN/2 -5 ,"Sleep Away");
 
-    mvprintw(3*ROW/5,COLUMN/2 -13,"Maid With The Flaxen Hair");
+    mvprintw(3*ROW/5,COLUMN/2 -5,"Sacrifice");
 
     mvprintw(4*ROW/5, COLUMN/2 -2,"Back");
 
@@ -3762,14 +3795,15 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//
         PROCESS_PLAYER_INPUT(USER_INPUT,MAP, TEMP_PTR);
 
         
-
+/////////////////////////////////////////////////////////////////////////////////////////////////Experimental
     }
 
     else if(USER_INPUT==KEY_BACKSPACE) {//open pause menu
 
         cbreak(); //if user chooses to quit, get appropriate exit code from pause menu function
-
+        //////////////for now just closes the program
         //load pause menu
+        GLOBAL_EXIT_CODE=1;
 
         halfdelay(2);
 
@@ -4296,7 +4330,6 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             break;
         }
-
 
 
 
