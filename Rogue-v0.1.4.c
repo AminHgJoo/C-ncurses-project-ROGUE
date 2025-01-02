@@ -35,7 +35,7 @@ typedef struct point {
 
     char IS_DISCOVERED;
 
-    char PASSWORD_DOOR_TYPE;// '1' '2' 't' 'r' 1, 2, time, reverse
+    char PASSWORD_DOOR_TYPE;// '1' '2' 't' 'r' 'l' 1, 2, time, reverse, locked out!
 
     char COLOR; //y: yellow/golden, r :red , b: blue , w: white ///gold : treasure room
                 ////red : nightmare. blue: spell room. white : regular. 'o'(orange) for password door warning system
@@ -195,7 +195,7 @@ void PASSWORD_BACKGROUND_CHECK();
 
 void HANDLE_DOOR_PASSKEY_GENERATION(POINT [4][38][144]);
 
-
+void OPEN_PASSKEY_GUI(POINT [4][38][144]);
 
 
 
@@ -4223,6 +4223,16 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             }
 
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='@'
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD-1][GLOBAL_PLAYER_X_COORD].PASSWORD_DOOR_TYPE!='l'
+
+            ) {
+
+                OPEN_PASSKEY_GUI(MAP);
+
+            }
+
 
             break;
         }
@@ -4269,6 +4279,16 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
                 MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS='+';
 
                 MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].SYMBOL='?';
+
+            }
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].REAL_CONTENTS=='@'
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD+1].PASSWORD_DOOR_TYPE!='l'
+
+            ) {
+
+                OPEN_PASSKEY_GUI(MAP);
 
             }
 
@@ -4322,6 +4342,16 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             }
 
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].REAL_CONTENTS=='@'
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD-1].PASSWORD_DOOR_TYPE!='l'
+
+            ) {
+
+                OPEN_PASSKEY_GUI(MAP);
+
+            }
+
             break;
         }
 
@@ -4367,6 +4397,16 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
                 MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS='+';
 
                 MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].SYMBOL='?';
+
+            }
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='@'
+            
+            && MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD+1][GLOBAL_PLAYER_X_COORD].PASSWORD_DOOR_TYPE!='l'
+
+            ) {
+
+                OPEN_PASSKEY_GUI(MAP);
 
             }
 
@@ -5329,10 +5369,175 @@ void HANDLE_DOOR_PASSKEY_GENERATION(POINT MAP[4][38][144]) {
 
 void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
 
+    clear();
 
+    attron(GOLD_COLORED_CELL);
 
+    cbreak();
 
+    mvprintw(0,COLUMN/2 -11,"Input 4 Digit Passkey:");
 
+    mvprintw(ROW/2 , COLUMN/2 -2,"####");
 
+    echo(); curs_set(1); move(ROW/2 -1,COLUMN/2 -2); refresh();
+
+    attroff(GOLD_COLORED_CELL);
+
+    int INPUTTED_PASSKEY; 
+
+    int CORRECT_PASSWORD; int DOOR_X,DOOR_Y;
+
+    for(int i=0 ; i<38 ; i++) {//reverse entering passkey and finding door x/y
+        int BREAK=0;
+        for(int j=0 ; j<144 ; j++) {
+            if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='@') {
+
+                DOOR_X=j; DOOR_Y=i;
+
+                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].PASSWORD_DOOR_TYPE=='r') {
+
+                    int X,Y,Z,T;
+
+                    T=GLOBAL_DOOR_PASSWORD%10; Z=(GLOBAL_DOOR_PASSWORD%100-T)/10 ; Y=(GLOBAL_DOOR_PASSWORD%1000-Z*10-T)/100;
+
+                    X=(GLOBAL_DOOR_PASSWORD%10000-100*Y-10*Z-T)/1000;
+
+                    CORRECT_PASSWORD=1000*T+100*Z+10*Y+X;
+
+                }
+
+                BREAK++;
+                break;
+            }
+        }
+        if(BREAK==1) {
+            break;
+        }
+    }
+
+    if(MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].PASSWORD_DOOR_TYPE!='r') {
+
+        CORRECT_PASSWORD=GLOBAL_DOOR_PASSWORD;
+
+    }
+
+    scanw("%d",&INPUTTED_PASSKEY);
+
+    noecho(); curs_set(0);
+
+    if(INPUTTED_PASSKEY==CORRECT_PASSWORD) {
+
+        GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
+
+        GLOBAL_DOOR_PASSWORD=-1;
+
+        clear(); attron(GREEN_COLORED_CELL);
+
+        mvprintw(ROW/2 ,COLUMN/2 -20,"Correct Passkey! Press a Key to Continue");
+
+        refresh(); getch();
+
+        attroff(GREEN_COLORED_CELL);
+
+        for(int i=0 ; i<38 ; i++) {
+            for(int j=0 ; j<144 ; j++) {
+                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='&' && MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR!='g') {
+                    MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR='g';
+                    break;
+                }
+            }
+        }
+
+        if(MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].PASSWORD_DOOR_TYPE=='2') {
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].PASSWORD_DOOR_TYPE='1';
+
+        }
+
+        else {
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR='g';
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].REAL_CONTENTS='+';
+
+        }
+                    
     
+    }
+
+    else {
+
+        GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
+
+        if(GLOBAL_IS_PASSWORD_DYNAMIC==TRUE) {
+            GLOBAL_DOOR_PASSWORD=-1;
+        }
+
+        GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
+        
+        //determine warning level
+        if(MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR=='r') {
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR='y';
+
+            for(int i=0 ; i<38 ; i++) {
+                for (int j=0 ; j<144 ; j++) {
+                    if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='&' && MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR!='g') {
+
+                        MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR='y';
+
+                    }
+                }
+            }
+
+            attron(GOLD_COLORED_CELL); clear();
+            mvprintw(ROW/2, COLUMN/2 - 29,"Wrong Passkey! 1st Warning Issued. Press a Key to Continue"); 
+            attroff(GOLD_COLORED_CELL); refresh(); getch();
+
+        }
+        else if(MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR=='y') {
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR='o';
+
+            for(int i=0 ; i<38 ; i++) {
+                for (int j=0 ; j<144 ; j++) {
+                    if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='&' && MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR!='g') {
+
+                        MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR='o';
+
+                    }
+                }
+            }
+            clear(); attron(ORANGE_COLORED_CELL);
+            mvprintw(ROW/2 , COLUMN/2 -27,"Wrong Passkey! Last Warning! Press a Key to Continue."); 
+            refresh(); getch();
+            attroff(ORANGE_COLORED_CELL);
+        }
+        else if(MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR=='o') {
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR='r';
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].PASSWORD_DOOR_TYPE='l';
+
+            for(int i=0 ; i<38 ; i++) {
+                for (int j=0 ; j<144 ; j++) {
+                    if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='&' && MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR!='g') {
+
+                        MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR='r';
+
+                    }
+                }
+            }
+            clear(); attron(RED_COLORED_CELL);
+            mvprintw(ROW/2 , COLUMN/2 -30,"Wrong Passkey! Security Activated! Press a Key to Continue."); 
+            refresh(); getch();
+            attroff(RED_COLORED_CELL);
+        }
+
+    }
+
+    halfdelay(10);
+
+    PRINT_MAP_ON_SCREEN(MAP);
+
 }
