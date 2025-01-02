@@ -2316,7 +2316,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
             FLOOR[i][j].COLOR='w';
 
-            FLOOR[i][j].PASSWORD_DOOR_TYPE=0;
+            FLOOR[i][j].PASSWORD_DOOR_TYPE='a';
 
         }
 
@@ -2788,9 +2788,9 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
         ANOTHER_RANDOM_QUERRY=rand()%3+1;
 
-        if(ANOTHER_RANDOM_QUERRY==1 || FLOOR_NUMBER>=3) {//normal pass door with 1 or 2 passwords
+        if(ANOTHER_RANDOM_QUERRY==1 || FLOOR_NUMBER==4) {//normal pass door with 1 or 2 passwords
 
-            if(FLOOR_NUMBER>=3) {//2 passes
+            if(FLOOR_NUMBER==4) {//2 passes
 
                 int RAND_X,RAND_Y;
 
