@@ -102,6 +102,22 @@ int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_o
 int GLOBAL_SHOW_ALL=FALSE;
 
 
+
+
+unsigned long long int GLOBAL_MOST_RECENT_PASSWORD_REQUEST_TIME=0;
+
+int GLOBAL_DOOR_PASSWORD=-1; //Changing Floors Resets This Value Back to -1
+
+int GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
+
+int GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
+
+
+
+
+
+
+
 void HANDLE_GUEST_USER();
 char GAME_STARTUP_MENU();
 void USER_REGISTERATION();
@@ -166,11 +182,18 @@ int PROCESS_PLAYER_INPUT(int, POINT [4][38][144], char *);
 
 void PRINT_MAP_ON_SCREEN(POINT [4][38][144]);
 
-void UPDATE_EXPLORATION(POINT [4][38][144]);
+void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT [4][38][144]);
 
 void REVEAL_ENTIRE_SECTOR(POINT [4][38][144],int );
 
 void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
+
+
+
+
+void PASSWORD_BACKGROUND_CHECK();
+
+void HANDLE_DOOR_PASSKEY_GENERATION(POINT [4][38][144]);
 
 
 
@@ -228,7 +251,7 @@ int main() {
 
     }
 
-    //determine max player HP based on difficulty////////////////////start playing music
+    //determine max player HP based on difficulty
 
     SDL_Init(SDL_INIT_AUDIO);
 
@@ -262,19 +285,21 @@ int main() {
 
     halfdelay(10); //1 sec delay
 
-    char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION(MAP);    PRINT_MAP_ON_SCREEN(MAP);
-
-
+    char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);    PRINT_MAP_ON_SCREEN(MAP);
 
     while(GLOBAL_EXIT_CODE==0) {//game loop
 
         HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
 
-        UPDATE_EXPLORATION(MAP);
-
-        //HANDLE BACKGROUND TIMERS.
+        UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);
 
         PRINT_MAP_ON_SCREEN(MAP);
+
+        if(GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK==TRUE) {
+
+            PASSWORD_BACKGROUND_CHECK();
+
+        }
 
         CLEAR_MESSAGE_BAR();
 
@@ -2805,7 +2830,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
                 FLOOR[RAND_Y][RAND_X].SYMBOL='&';
 
-                FLOOR[RAND_Y][RAND_X].COLOR='y';
+                FLOOR[RAND_Y][RAND_X].COLOR='w';
 
                 PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
 
@@ -2845,7 +2870,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
                 FLOOR[RAND_Y][RAND_X].SYMBOL='&';
 
-                FLOOR[RAND_Y][RAND_X].COLOR='y';
+                FLOOR[RAND_Y][RAND_X].COLOR='w';
 
                 for(int k=0 ; k<14 ; k++) {
 
@@ -2905,7 +2930,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
                 FLOOR[RAND_Y][RAND_X].SYMBOL='&';
 
-                FLOOR[RAND_Y][RAND_X].COLOR='y';
+                FLOOR[RAND_Y][RAND_X].COLOR='w';
 
                 PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
 
@@ -2969,7 +2994,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
             FLOOR[RAND_Y][RAND_X].SYMBOL='&';
 
-            FLOOR[RAND_Y][RAND_X].COLOR='y';
+            FLOOR[RAND_Y][RAND_X].COLOR='w';
 
             PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
 
@@ -3032,7 +3057,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
             FLOOR[RAND_Y][RAND_X].SYMBOL='&';
 
-            FLOOR[RAND_Y][RAND_X].COLOR='y';
+            FLOOR[RAND_Y][RAND_X].COLOR='w';
 
             PASSWORD_DOOR_SECTOR=GIVE_SECTOR_NUMBER(RAND_X,RAND_Y);
 
@@ -4133,7 +4158,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {///
 
                 PROCESS_PLAYER_INPUT(MACRO_MOVEMENT,MAP,TEMP_PTR);
 
-                UPDATE_EXPLORATION(MAP);
+                UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);
 
                 PRINT_MAP_ON_SCREEN(MAP);
 
@@ -4145,9 +4170,6 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {///
 
     }
     //no input received. loop in main will go on
-
-
-
 
 }
 
@@ -4571,6 +4593,12 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
                 int BREAK=0;
 
+                GLOBAL_DOOR_PASSWORD=-1;
+
+                GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
+
+                GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
+
                 for(int i=0 ; i<38 ; i++) {
 
                     for(int j=0 ; j<144 ; j++) {
@@ -4607,6 +4635,12 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
             if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].IS_START==1) {
 
                 GLOBAL_PLAYER_FLOOR--;
+
+                GLOBAL_DOOR_PASSWORD=-1;
+
+                GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
+
+                GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
 
                 int BREAK=0;
 
@@ -4871,14 +4905,13 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
         }
 
+
+
+
+
+
+
     }
-
-
-
-
-
-
-
 
 }
 
@@ -4992,7 +5025,7 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
 }
 
-void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
+void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT MAP[4][38][144]) {//
 
     if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='+' 
     
@@ -5013,8 +5046,29 @@ void UPDATE_EXPLORATION(POINT MAP[4][38][144]) {//
     {//start revealing corridors
 
         REVEAL_HALLWAYS(MAP,0,6,GLOBAL_PLAYER_X_COORD,GLOBAL_PLAYER_Y_COORD);
+    
+    }
+
+    if(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS=='&' 
+    
+    && (MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].COLOR=='y'
+
+    || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].COLOR=='o'
+    
+    || MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].COLOR=='w'))
+
+    {
+
+        HANDLE_DOOR_PASSKEY_GENERATION(MAP);
 
     }
+
+
+
+
+
+
+
 
 
 }
@@ -5199,4 +5253,86 @@ void CLEAR_MESSAGE_BAR() {
 
     mvprintw(0,0,"                                                                                       ");
 
+}
+
+void PASSWORD_BACKGROUND_CHECK() {
+
+    unsigned long long int CURRENT_TIME_QUERRY=time(NULL);
+
+    if(CURRENT_TIME_QUERRY-GLOBAL_MOST_RECENT_PASSWORD_REQUEST_TIME>=30) {
+
+        GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
+
+        if(GLOBAL_IS_PASSWORD_DYNAMIC==TRUE) {
+
+            GLOBAL_DOOR_PASSWORD=-1;
+
+            GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
+
+        }
+
+    }
+
+    else {
+
+        attron(GOLD_COLORED_CELL | A_BLINK);
+
+        mvprintw(1,COLUMN/2 - 11,"Door Passkey is : %.4d",GLOBAL_DOOR_PASSWORD);
+
+        attroff(GOLD_COLORED_CELL); attroff(A_BLINK);
+
+        refresh();
+
+    }
+
+}
+
+void HANDLE_DOOR_PASSKEY_GENERATION(POINT MAP[4][38][144]) {
+
+    GLOBAL_MOST_RECENT_PASSWORD_REQUEST_TIME=time(NULL);
+
+    int IS_DYNAMIC=FALSE;
+
+    int BREAK=0;
+
+    for(int i=0 ; i<38 ; i++) {
+
+        for(int j=0 ; j<144 ; j++) {
+
+            if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='@') {
+
+                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].PASSWORD_DOOR_TYPE=='t') {
+
+                    GLOBAL_IS_PASSWORD_DYNAMIC=TRUE;
+
+                }
+
+                BREAK++;
+
+                break;
+
+            }
+
+        }
+
+        if(BREAK==1) {
+            break;
+        }
+
+    }
+
+    GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=TRUE;
+
+    GLOBAL_DOOR_PASSWORD=rand()%10000;
+
+}
+
+void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
+
+
+
+
+
+
+    
 }
