@@ -267,15 +267,17 @@ int main() {
 
     char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION(MAP);    PRINT_MAP_ON_SCREEN(MAP);
 
+
+
     while(GLOBAL_EXIT_CODE==0) {//game loop
 
-    HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
+        HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
 
-    UPDATE_EXPLORATION(MAP);
+        UPDATE_EXPLORATION(MAP);
 
-    //HANDLE BACKGROUND TIMERS.
+        //HANDLE BACKGROUND TIMERS.
 
-    PRINT_MAP_ON_SCREEN(MAP);
+        PRINT_MAP_ON_SCREEN(MAP);
 
     }   
 
@@ -283,27 +285,13 @@ int main() {
 
     //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES. 
     //end halfdelay mode
-    cbreak();
-
-    clear();
-
-    attrset(A_NORMAL);
-
-    curs_set(0);
+    cbreak();   clear();    attrset(GOLD_COLORED_CELL);  curs_set(0);
 
     mvprintw(ROW/2,COLUMN/2 -24,"Hope You Had Fun! Press a Key to Close The Game.");
 
-    refresh();
+    refresh();  getch();    endwin();
 
-    getch();
-
-    endwin();
-
-    Mix_CloseAudio();
-
-    Mix_FreeMusic(music);
-
-    SDL_Quit();
+    Mix_CloseAudio();   Mix_FreeMusic(music);   SDL_Quit();
 
     return 0;
 }
@@ -3786,20 +3774,18 @@ void GENERATE_ANCIENT_KEY(POINT FLOOR[38][144]) {
 
 } 
 
-void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//
+void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//////////////
 
     int USER_INPUT=getch();
 
     int VALID;
 
-    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE) {
+    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE && USER_INPUT!='f' && USER_INPUT!='F') {
 
         PROCESS_PLAYER_INPUT(USER_INPUT,MAP, TEMP_PTR);
 
-        
-/////////////////////////////////////////////////////////////////////////////////////////////////Experimental
-    }
-
+    }  
+/////////////////////////////////////////////////////////////////////////////////////////////////Experimental//////////
     else if(USER_INPUT==KEY_BACKSPACE) {//open pause menu
 
         cbreak(); //if user chooses to quit, get appropriate exit code from pause menu function
@@ -3807,10 +3793,42 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//
         //load pause menu
         GLOBAL_EXIT_CODE=1;
 
-        halfdelay(2);
+        halfdelay(10);
 
     }
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    else if(USER_INPUT=='f' || USER_INPUT=='F') {//movement Macro
 
+        int MACRO_MOVEMENT=getch();
+
+        if(MACRO_MOVEMENT=='1' || MACRO_MOVEMENT=='2'||MACRO_MOVEMENT=='3' || MACRO_MOVEMENT=='4'
+        
+        || MACRO_MOVEMENT=='6' || MACRO_MOVEMENT=='7'||MACRO_MOVEMENT=='8' || MACRO_MOVEMENT=='9'
+        
+        ) {//initiate macro
+
+            int CURRENT_X,CURRENT_Y;
+
+            do {
+
+                CURRENT_X=GLOBAL_PLAYER_X_COORD; CURRENT_Y=GLOBAL_PLAYER_Y_COORD;
+
+                PROCESS_PLAYER_INPUT(MACRO_MOVEMENT,MAP,TEMP_PTR);
+
+                UPDATE_EXPLORATION(MAP);
+
+                PRINT_MAP_ON_SCREEN(MAP);
+
+                //add anything else as added in main
+
+            } while(CURRENT_X!=GLOBAL_PLAYER_X_COORD || CURRENT_Y!= GLOBAL_PLAYER_Y_COORD);
+
+
+
+
+        }
+
+    }
     //no input received. loop in main will go on
 
 
