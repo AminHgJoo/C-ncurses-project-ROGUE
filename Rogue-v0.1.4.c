@@ -19,7 +19,8 @@
 #define GREEN_HIGHLIGHT COLOR_PAIR(9)
 #define BLUE_HIGHLIGHT COLOR_PAIR(10)
 #define WHITE_HIGHLIGHT COLOR_PAIR(11)
-
+#define ORANGE_COLORED_CELL COLOR_PAIR(7)
+#define COLOR_ORANGE COLOR_CYAN// Cyan has been changed.
 
 
 
@@ -34,7 +35,8 @@ typedef struct point {
 
     char IS_DISCOVERED;
 
-    char COLOR; //y: yellow/golden, r :red , b: blue , w: white ,g : green
+    char COLOR; //y: yellow/golden, r :red , b: blue , w: white ///gold : treasure room
+                ////red : nightmare. blue: spell room. white : regular. 'o'(orange) for password door warning system
 
     char IS_START; //1 means start, -1 means end
 
@@ -121,6 +123,9 @@ void PRINT_MUSIC_MENU();
 
 
 
+void TURN_OFF_COLOR_FOR_MAP_PRINT(char);
+
+void TURN_ON_COLOR_FOR_MAP_PRINT(char);
 
 int GIVE_SECTOR_NUMBER(int , int );
 
@@ -198,6 +203,10 @@ int main() {
 
         init_pair(6,COLOR_WHITE,COLOR_BLACK); init_pair(11,COLOR_BLACK,COLOR_WHITE);
 
+        init_color(COLOR_ORANGE,690,310,0);
+
+        init_pair(7,COLOR_ORANGE,COLOR_BLACK);
+
         //add colors later
     }
 
@@ -207,7 +216,7 @@ int main() {
 
     HANDLE_SETTINGS();
 
-    PRE_GAME_MENU();//settings menu must update settings in .txt file and live in game.if user is guest, don't write in .txt file
+    PRE_GAME_MENU();
 
     POINT MAP[4][38][144];
 
@@ -2283,7 +2292,7 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
 
 int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOOR ONLY
     
-    for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, and IS_START.
+    for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, COLOR, and IS_START.
 
         for(int j=0 ; j<144 ; j++) {
 
@@ -2292,6 +2301,8 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
             FLOOR[i][j].SYMBOL=' ';
 
             FLOOR[i][j].IS_START=0;
+
+            FLOOR[i][j].COLOR='w';
 
         }
 
@@ -2742,15 +2753,6 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR) {////ONE FLOO
     }
 
     //generate non-secret random features(doors, windows, password doors and stairs, ...)
-
-    for(int i=0 ; i<38 ; i++) {//white color by default
-    
-        for(int j=0 ; j<144 ; j++) {
-
-            FLOOR[i][j].COLOR='w';
-
-        }
-    }
 
     DOOR RETURN_DOORS[14];
 
@@ -4346,7 +4348,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
 }
 
-void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
+void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later./////////////////////////////////////////////////
 
     clear();
 
@@ -4359,15 +4361,51 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//test only
         for(int j=0 ; j<144 ; j++) {
 
             if(GLOBAL_SHOW_ALL==FALSE) {
-                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_DISCOVERED==1)
-                    printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].IS_DISCOVERED==1) {
+
+                    if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='H') {//print hero color
+
+                        TURN_ON_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
+
+                        printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                        TURN_OFF_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
+
+                    }
+                    else {
+
+                        TURN_ON_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
+
+                        printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                        TURN_OFF_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
+
+                    }
+                }
                 else
                     printw(" ");
             }
 
             else {
 
-                printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+                if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='H') {//print hero color
+
+                    TURN_ON_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
+
+                    printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                    TURN_OFF_COLOR_FOR_MAP_PRINT(GLOBAL_SETTINGS.HERO_COLOR);
+
+                }
+                else {
+
+                    TURN_ON_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
+
+                    printw("%c",MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL);
+
+                    TURN_OFF_COLOR_FOR_MAP_PRINT(MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR);
+                }
 
             }
 
@@ -4506,6 +4544,79 @@ void REVEAL_HALLWAYS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES_
 
 }
 
+void TURN_ON_COLOR_FOR_MAP_PRINT(char COLOR_TO_BE_PRINTED) {
 
+    switch(COLOR_TO_BE_PRINTED) {
 
+        case 'r' :
+
+            attron(RED_COLORED_CELL);
+
+            break;
+        case 'b' :
+
+            attron(BLUE_COLORED_CELL);
+
+            break;
+        case 'y' : 
+
+            attron(GOLD_COLORED_CELL);
+
+            break;
+        case 'w' :
+
+            attron(WHITE_COLORED_CELL);
+
+            break;
+        case 'g' :
+
+            attron(GREEN_COLORED_CELL);
+
+            break;
+        case 'o':
+
+            attron(ORANGE_COLORED_CELL);
+
+            break;
+    }
+
+}
+
+void TURN_OFF_COLOR_FOR_MAP_PRINT(char COLOR_TO_BE_OFFED) {
+
+    switch(COLOR_TO_BE_OFFED) {
+
+        case 'r' :
+
+            attroff(RED_COLORED_CELL);
+
+            break;
+        case 'b' :
+
+            attroff(BLUE_COLORED_CELL);
+
+            break;
+        case 'y' : 
+
+            attroff(GOLD_COLORED_CELL);
+
+            break;
+        case 'w' :
+
+            attroff(WHITE_COLORED_CELL);
+
+            break;
+        case 'g' :
+
+            attroff(GREEN_COLORED_CELL);
+
+            break;
+        case 'o':
+
+            attroff(ORANGE_COLORED_CELL);
+
+            break;
+    }
+
+}
 
