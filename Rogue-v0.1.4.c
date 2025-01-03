@@ -24,6 +24,8 @@
 
 
 
+
+
 typedef struct point {
 
     char SYMBOL;
@@ -85,7 +87,15 @@ typedef struct inventory {//this struct must be saved
 
     int BROKEN_KEYS;
 
-    int HUNGER; int HP; int SCORE; int GOLD;
+    int HUNGER; int HP; int SCORE; int GOLD; int FOOD_ITEMS;//all 0 at start except HP/HUNGER
+
+    int H_SPELL,S_SPELL,D_SPELL; //all 0 at start
+
+    int MACE,DAGGER,WAND,ARROW,SWORD; //all 0 at start, except mace which is 1
+
+    int TIME_PLAYED;
+
+
 
 } INVENTORY_AND_STATS;
 
@@ -109,6 +119,8 @@ char GLOBAL_LOGGED_IN_USER[100];
 int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_of_game exit, 3 is saved and quit
 
 int GLOBAL_SHOW_ALL=FALSE;
+
+int GLOBAL_MAX_HP; //no need to save. determined based on settings.
 
 //----------------------------------------------Message Handling--------------------------------------------------------------------//
 
@@ -153,7 +165,8 @@ void PRINT_MUSIC_MENU();
 void OPEN_PAUSE_MENU();
 void PRINT_PAUSE_MENU();
 void START_GAME();
-void SHUTDOWN_GAME();
+void SHUTDOWN_GAME(Mix_Music *);
+void SAVE_GAME(POINT [4][38][144],int );
 
 //-----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
 
@@ -167,7 +180,7 @@ void TURN_ON_COLOR_FOR_MAP_PRINT(char);
 
 int GIVE_SECTOR_NUMBER(int , int );
 
-void LOAD_MAP(POINT [4][38][144]);
+void LOAD_MAP_AND_INVENTORY(POINT [4][38][144]);
 
 void GENERATE_MAP(POINT [4][38][144]);
 
@@ -201,6 +214,8 @@ void REVEAL_ENTIRE_SECTOR(POINT [4][38][144],int );
 
 void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
 
+void FIND_MAX_HP();
+
 //--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
 
 void PASSWORD_BACKGROUND_CHECK();
@@ -215,7 +230,7 @@ int HANDLE_ANCIENT_KEY_USAGE();
 
 void HANDLE_ITEM_PICKUPS(POINT [4][38][144],char *);
 
-//---------------------------------------------------------------------------------------------------------------------------------------//
+//-------------------------------------------------------------main-----------------------------------------------------------------------//
 
 int main() {
 
@@ -231,9 +246,9 @@ int main() {
 
     POINT MAP[4][38][144];
 
-    if(GLOBAL_LOAD_SAVE==TRUE) {//load from save onto MAP
+    if(GLOBAL_LOAD_SAVE==TRUE) {
 
-        LOAD_MAP(MAP);//load map, exploration progress and player location onto global variables
+        LOAD_MAP_AND_INVENTORY(MAP);
 
     }
     else {
@@ -242,13 +257,9 @@ int main() {
 
     }
 
-    //determine max player HP based on difficulty
+    FIND_MAX_HP();
 
-    SDL_Init(SDL_INIT_AUDIO);
-
-    Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);
-
-    Mix_Music *music = NULL;
+    SDL_Init(SDL_INIT_AUDIO);   Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);  Mix_Music *music = NULL;
 
     switch(GLOBAL_SETTINGS.MUSIC) {
 
@@ -299,6 +310,12 @@ int main() {
     //write function to handle user exit. saved | unsaved | end of game exit.
 
     unsigned long long int FINISH_TIME=time(NULL);
+
+    if(GLOBAL_EXIT_CODE==3) {
+
+        SAVE_GAME(MAP,FINISH_TIME-START_TIME);
+
+    }
 
     //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES. 
     
@@ -729,6 +746,14 @@ void USER_REGISTERATION() {
 
     fclose(USERS);
 
+    strcpy(GLOBAL_LOGGED_IN_USER,USERNAME);
+
+    char FILE_NAME_FOR_USER[100]="saves_";
+
+    strcat(FILE_NAME_FOR_USER,USERNAME);
+
+    strcat(FILE_NAME_FOR_USER,".txt");
+
     FILE *SCOREBOARD=fopen("user_scores.txt","a+");
 
     fprintf(SCOREBOARD,"%s %d %d %d %d ",USERNAME,0,0,0,0);
@@ -741,7 +766,7 @@ void USER_REGISTERATION() {
 
     fclose(SETTINGS);
 
-    FILE *SAVES=fopen("user_saves_and_inventory.txt","a+"); //create that .txt file.
+    FILE *SAVES=fopen(FILE_NAME_FOR_USER,"a+"); //create that .txt file.
 
     fclose(SAVES);
 
@@ -761,7 +786,7 @@ void USER_REGISTERATION() {
 
     attroff(COLOR_PAIR(1));
 
-    strcpy(GLOBAL_LOGGED_IN_USER,USERNAME);
+    
 
 }
 int USER_LOGIN() {
@@ -2235,7 +2260,117 @@ void PRINT_MUSIC_MENU() {
 
 
 
-void LOAD_MAP(POINT MAP[4][38][144]) {//
+void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
+
+    if(GLOBAL_IS_GUEST==TRUE) {
+
+        clear(); 
+
+        attron(RED_COLORED_CELL); 
+
+        mvprintw(ROW/2, COLUMN/2 -31, "As a Guest You Have No Saves. Press a Key to Create New Game.");
+
+        attroff(RED_COLORED_CELL); refresh();
+
+        getch();
+
+        GENERATE_MAP(MAP);
+
+    }
+
+    else {
+
+        char FILE_NAME[100]="saves_";
+
+        strcat(FILE_NAME,GLOBAL_LOGGED_IN_USER);
+
+        strcat(FILE_NAME,".txt");
+
+        FILE *SAVES=fopen(FILE_NAME,"r");
+
+        char DUMMY_DATA[20];
+
+        fgets(DUMMY_DATA,19,SAVES);
+
+        rewind(SAVES);
+
+        int TEMPORARY;
+
+        char *USER_POINTER=strstr(DUMMY_DATA,GLOBAL_LOGGED_IN_USER);
+
+        if(USER_POINTER==NULL) {
+
+            clear(); 
+
+            attron(RED_COLORED_CELL); 
+
+            mvprintw(ROW/2, COLUMN/2 -24, "No Saves Found. Press a Key to Create New Game.");
+
+            attroff(RED_COLORED_CELL); refresh();
+
+            getch();
+
+            GENERATE_MAP(MAP);
+        }
+
+        else {
+
+            fscanf(SAVES,"%s",DUMMY_DATA);//get dummy username first
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.H_SPELL);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.S_SPELL);
+            
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.D_SPELL);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.MACE);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.DAGGER);
+            
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.WAND);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.ARROW);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.SWORD);
+            
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.GOLD);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.SCORE);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.FOOD_ITEMS);
+            
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.HP);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.HUNGER);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED);
+            
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.x);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.y);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.FLOOR);
+            
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.KEYS);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_STATS.BROKEN_KEYS);
+
+            for(int i=0 ; i<4 ; i++) {
+                for(int j=0 ; j<38 ; j++) {
+                    for(int k=0 ; k<144 ; k++) {
+                        fscanf(SAVES," %c%c%c%c%c%c",&MAP[i][j][k].COLOR,&MAP[i][j][k].IS_DISCOVERED,&MAP[i][j][k].IS_START
+                        
+                        ,&MAP[i][j][k].PASSWORD_DOOR_TYPE,&MAP[i][j][k].REAL_CONTENTS,&MAP[i][j][k].SYMBOL);
+                        
+                    }
+                }
+            }
+
+        }
+
+        fclose(SAVES);
+
+    }
 
 }
 
@@ -5832,6 +5967,16 @@ void START_GAME() {
 
     GLOBAL_INVENTORY_AND_STATS.FLOOR=0; GLOBAL_INVENTORY_AND_STATS.KEYS=0; GLOBAL_INVENTORY_AND_STATS.BROKEN_KEYS=0;
 
+    GLOBAL_INVENTORY_AND_STATS.H_SPELL=0; GLOBAL_INVENTORY_AND_STATS.D_SPELL=0 ; GLOBAL_INVENTORY_AND_STATS.S_SPELL=0;
+
+    GLOBAL_INVENTORY_AND_STATS.SCORE=0; GLOBAL_INVENTORY_AND_STATS.GOLD=0; GLOBAL_INVENTORY_AND_STATS.FOOD_ITEMS=0;
+
+    GLOBAL_INVENTORY_AND_STATS.HUNGER=100; GLOBAL_INVENTORY_AND_STATS.HP=0;
+
+    GLOBAL_INVENTORY_AND_STATS.ARROW=0; GLOBAL_INVENTORY_AND_STATS.DAGGER=0; GLOBAL_INVENTORY_AND_STATS.MACE=1; 
+
+    GLOBAL_INVENTORY_AND_STATS.SWORD=0; GLOBAL_INVENTORY_AND_STATS.WAND=0; GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED=0;
+
     setlocale(LC_ALL, "");  srand(time(NULL));
 
     initscr();  noecho();   curs_set(0);    keypad(stdscr,TRUE);
@@ -5872,3 +6017,124 @@ void SHUTDOWN_GAME(Mix_Music *music) {
     Mix_CloseAudio();   Mix_FreeMusic(music);   SDL_Quit();
 
 }
+
+void FIND_MAX_HP() {
+
+    if(GLOBAL_SETTINGS.DIFFICULTY=='h') {
+        GLOBAL_MAX_HP=50;
+    }
+    else if(GLOBAL_SETTINGS.DIFFICULTY=='n') {
+        GLOBAL_MAX_HP=100;
+    }
+    else {
+        GLOBAL_MAX_HP=150;
+    }
+
+    if(GLOBAL_INVENTORY_AND_STATS.HP==0) {
+        GLOBAL_INVENTORY_AND_STATS.HP=GLOBAL_MAX_HP;
+    }
+    if(GLOBAL_INVENTORY_AND_STATS.HP>GLOBAL_MAX_HP) {
+        GLOBAL_INVENTORY_AND_STATS.HP=GLOBAL_MAX_HP;
+    }
+
+
+}
+
+void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
+
+    if(GLOBAL_IS_GUEST==FALSE) {
+
+        char FREE_SPACE[100];
+
+        clear(); cbreak(); attron(GOLD_COLORED_CELL); echo();
+
+        mvprintw(0,COLUMN/2 -8,"Name Your Save.");
+
+        mvprintw(ROW/2, COLUMN/2 -8 , "###############");
+
+        move(ROW/2 -1 , COLUMN/2 -8); refresh(); attroff(GOLD_COLORED_CELL);
+
+        getstr(FREE_SPACE);
+
+        char STRING[100]="saves_";
+
+        strcat(STRING,GLOBAL_LOGGED_IN_USER);
+
+        strcat(STRING,".txt");
+
+        FILE *SAVE_LOCATION=fopen(STRING,"w");
+
+        fprintf(SAVE_LOCATION,"%s ",GLOBAL_LOGGED_IN_USER);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.H_SPELL);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.S_SPELL);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.D_SPELL);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.MACE);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.DAGGER);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.WAND);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.ARROW);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.SWORD);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.GOLD);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.SCORE);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.FOOD_ITEMS);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.HP);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.HUNGER);
+
+        fprintf(SAVE_LOCATION,"%d ",DELTA_T_PLAYED);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.x);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.y);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.FLOOR);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.KEYS);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_STATS.BROKEN_KEYS);
+
+        for(int i=0 ; i<4 ; i++) {
+            for(int j=0 ; j<38 ; j++) {
+                for(int k=0 ; k<144 ; k++) {
+
+                    fprintf(SAVE_LOCATION,"%c",MAP[i][j][k].COLOR);
+
+                    fprintf(SAVE_LOCATION,"%c",MAP[i][j][k].IS_DISCOVERED);
+
+                    fprintf(SAVE_LOCATION,"%c",MAP[i][j][k].IS_START);
+
+                    fprintf(SAVE_LOCATION,"%c",MAP[i][j][k].PASSWORD_DOOR_TYPE);
+
+                    fprintf(SAVE_LOCATION,"%c",MAP[i][j][k].REAL_CONTENTS);
+
+                    fprintf(SAVE_LOCATION,"%c",MAP[i][j][k].SYMBOL);
+                }
+            }
+        }
+
+        fclose(SAVE_LOCATION);
+
+    }
+
+    else {
+
+        clear(); attron(RED_COLORED_CELL); cbreak();
+
+        mvprintw(ROW/2 ,COLUMN/2 -24 ,"As a Guest, You Can't Save! Press a Key to Exit.");
+
+        attroff(RED_COLORED_CELL); refresh(); getch();
+
+    }
+}
+
