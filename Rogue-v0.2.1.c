@@ -28,7 +28,7 @@
 
 typedef struct point {
 
-    char SYMBOL;
+    char SYMBOL;//-1 is Δ, -2 is ζ (wand) , -3 is τ (sword) , -4 is ι (dagger)
 
     char REAL_CONTENTS; 
 
@@ -172,6 +172,8 @@ void SAVE_GAME(POINT [4][38][144],int );
 void OPEN_FOOD_MENU();
 void OPEN_WEAPONS_MENU();
 void OPEN_SPELLS_MENU();
+void OPEN_VICTORY_MENU();
+void SAVE_ONTO_SCOREBOARD(int );
 
 //-----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
 
@@ -295,11 +297,11 @@ int main() {
 
     GLOBAL_LAST_HUNGER_TIME_QUERRY=START_TIME;
 
-    halfdelay(10); //1 sec delay
+    halfdelay(10); 
 
     char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);    PRINT_MAP_ON_SCREEN(MAP);
 
-    while(GLOBAL_EXIT_CODE==0) {//game loop//////////////////// more background checks needed
+    while(GLOBAL_EXIT_CODE==0) {//game loop//////////////////// more background checks needed for spell room
 
         HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
 
@@ -329,9 +331,9 @@ int main() {
 
     }
 
-    if(GLOBAL_EXIT_CODE==2) {//update scoreboard. display victory message//////////////////////////////////////////////////////
+    if(GLOBAL_EXIT_CODE==2) {
 
-
+        SAVE_ONTO_SCOREBOARD(FINISH_TIME-START_TIME+GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED);
 
     } 
     
@@ -4324,7 +4326,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
 }
 
-int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {//////////////////////////2 keys 4 weapon/spell menu
+int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {
 
     switch(USER_INPUT) //inventory and other stuff will be implemented later.
     //movement with numpad added
@@ -5190,6 +5192,21 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {
                                 mvprintw(i,j,"Δ");
 
                             }
+                            if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL==-2) {//wand
+
+                                mvprintw(i,j,"ζ");
+
+                            }
+                            if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL==-3) {//sword
+
+                                mvprintw(i,j,"τ");
+
+                            }
+                            if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL==-4) {//dagger
+
+                                mvprintw(i,j,"ι");
+ 
+                            }
 
 
                         }
@@ -5231,7 +5248,21 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {
 
                         }
 
+                        if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL==-2) {//wand
 
+                            mvprintw(i,j,"ζ");
+
+                        }
+                        if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL==-3) {//sword
+
+                            mvprintw(i,j,"τ");
+
+                        }
+                        if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL==-4) {//dagger
+
+                            mvprintw(i,j,"ι");
+ 
+                        }
 
                     }
 
@@ -5311,6 +5342,12 @@ void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT MAP[4][38][144]) {
         PRINT_MESSAGE("You Stepped On a Trap!");
 
         HANDLE_TRAP_ACTIVATION();
+
+    }
+
+    if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][GLOBAL_INVENTORY_AND_STATS.y][GLOBAL_INVENTORY_AND_STATS.x].REAL_CONTENTS=='x') {
+
+        OPEN_VICTORY_MENU();
 
     }
 
@@ -6042,7 +6079,7 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {//--------------
             break;
         }
         
-        case 'S' : {//sword
+        case -3 : {//sword
             *TEMP_PTR='.';
 
             MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][GLOBAL_INVENTORY_AND_STATS.y][GLOBAL_INVENTORY_AND_STATS.x].REAL_CONTENTS='.';
@@ -6084,7 +6121,7 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {//--------------
 
             break;
         }
-        case 'W' : {//magic wand
+        case -2 : {//magic wand
             *TEMP_PTR='.';
 
             MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][GLOBAL_INVENTORY_AND_STATS.y][GLOBAL_INVENTORY_AND_STATS.x].REAL_CONTENTS='.';
@@ -6126,7 +6163,7 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {//--------------
 
             break;
         }
-        case 'D' : {//dagger
+        case -4 : {//dagger
             *TEMP_PTR='.';
 
             MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][GLOBAL_INVENTORY_AND_STATS.y][GLOBAL_INVENTORY_AND_STATS.x].REAL_CONTENTS='.';
@@ -6576,17 +6613,123 @@ void HANDLE_TRAP_ACTIVATION() {//will change in phase 2
 
 }
 
-
 void OPEN_WEAPONS_MENU() {
 
     clear(); cbreak(); attron(GOLD_COLORED_CELL);
+
+    mvprintw(0,COLUMN/2 - 12,"Press a Key to Exit.");
+
+    mvprintw(ROW/2,0,"Daggers :%d",GLOBAL_INVENTORY_AND_STATS.DAGGER);
+
+    mvprintw(ROW/2+1,0,"Maces :%d",GLOBAL_INVENTORY_AND_STATS.MACE);
+
+    mvprintw(ROW/2+2,0,"Swords :%d",GLOBAL_INVENTORY_AND_STATS.SWORD);
+
+    mvprintw(ROW/2+3,0,"Magic Wands :%d",GLOBAL_INVENTORY_AND_STATS.WAND);
+
+    mvprintw(ROW/2+4,0,"Normal Arrows:%d",GLOBAL_INVENTORY_AND_STATS.ARROW);
+
+    attroff(GOLD_COLORED_CELL); refresh(); getch();
+
+    halfdelay(10);
 
 }
 
 void OPEN_SPELLS_MENU() {
 
+    clear(); cbreak(); attron(GOLD_COLORED_CELL);
+
+    mvprintw(0,COLUMN/2 - 12,"Press a Key to Exit.");
+
+    mvprintw(ROW/2,0,"Speed Spells :%d",GLOBAL_INVENTORY_AND_STATS.S_SPELL);
+
+    mvprintw(ROW/2+1,0,"Damage Spells :%d",GLOBAL_INVENTORY_AND_STATS.D_SPELL);
+
+    mvprintw(ROW/2+2,0,"Health Spells:%d",GLOBAL_INVENTORY_AND_STATS.H_SPELL);
+
+    attroff(GOLD_COLORED_CELL); refresh(); getch();
+
+    halfdelay(10);
+
+}
+
+void OPEN_VICTORY_MENU() {
+
+    cbreak(); clear(); attron(GOLD_COLORED_CELL);
+
+    GLOBAL_EXIT_CODE=2;
+
+    mvprintw(ROW/2 , COLUMN/2-19,"Congratulations! You Reached The Exit!");
+
+    mvprintw(ROW/2+1 , COLUMN/2 -20 ,"Your Score :%d | Gold Collected :%d",GLOBAL_INVENTORY_AND_STATS.SCORE
+    
+    ,GLOBAL_INVENTORY_AND_STATS.GOLD);
+
+    mvprintw(ROW/2+2,COLUMN/2 -20 ,"Press a Key To Save Your Score and Exit.");
+    
+    attroff(GOLD_COLORED_CELL); refresh(); getch();
+
+}
+
+void SAVE_ONTO_SCOREBOARD(int DELTA_T_PLAYED) {
+
+    FILE *SCORES=fopen("user_scores.txt","r+");
+
+    char DATA[10000];
+
+    fgets(DATA,9999,SCORES);
+
+    rewind(SCORES);
+
+    int PREVIOUS_SCORE; int PREVIOUS_GOLD; int PREVIOUS_NUMBER_OF_GAMES; int PREVIOUS_TIME_PLAYED;
+
+    char TEMP[20];
+
+    do {
+
+        strcpy(TEMP,"\0");
+
+        fscanf(SCORES," %s",TEMP);
+
+    }   while(strcmp(TEMP,GLOBAL_LOGGED_IN_USER)!=0);
+
+    //make file pointer reach desired numbers.
+
+    fscanf(SCORES,"%d %d %d %d",&PREVIOUS_SCORE,&PREVIOUS_GOLD,&PREVIOUS_NUMBER_OF_GAMES
+    
+    ,&PREVIOUS_TIME_PLAYED);
+
+    fclose(SCORES);
+
+    PREVIOUS_SCORE+=GLOBAL_INVENTORY_AND_STATS.SCORE;
+
+    PREVIOUS_GOLD+=GLOBAL_INVENTORY_AND_STATS.GOLD;
+
+    PREVIOUS_NUMBER_OF_GAMES++;
+
+    PREVIOUS_TIME_PLAYED+=DELTA_T_PLAYED;
+
+    FILE* WRITE_TO_SCORES=fopen("user_scores.txt","w+");
+
+    char *FIND_USER=strstr(DATA,GLOBAL_LOGGED_IN_USER);
+
+    FIND_USER[0]='\0'; //terminate data string at selected user.
+
+    FIND_USER+=strlen(GLOBAL_LOGGED_IN_USER)+1; //points to first digit.
+
+    while(FIND_USER[0]==' ' || (FIND_USER[0]>='0' && FIND_USER[0]<='9')) {
+
+        FIND_USER++;
+
+    }//now pointer arrives at the next username or null character.
+
+    fprintf(WRITE_TO_SCORES,"%s",DATA); fprintf(WRITE_TO_SCORES,"%s %d %d %d %d ",GLOBAL_LOGGED_IN_USER,PREVIOUS_SCORE,
+    
+    
+    PREVIOUS_GOLD,PREVIOUS_NUMBER_OF_GAMES,PREVIOUS_TIME_PLAYED); fprintf(WRITE_TO_SCORES,"%s",FIND_USER);
 
 
+    fclose(WRITE_TO_SCORES);
 
 }
 
