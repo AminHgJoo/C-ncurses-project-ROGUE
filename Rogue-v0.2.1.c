@@ -51,6 +51,8 @@ typedef struct settings {
 
     char DIFFICULTY;
 
+    char PLAY_MUSIC;
+
 } SETTINGS;
 
 typedef struct door {
@@ -276,23 +278,28 @@ int main() {
 
     SDL_Init(SDL_INIT_AUDIO);   Mix_OpenAudio(22050, MIX_DEFAULT_FORMAT, 2, 4096);  Mix_Music *music = NULL;
 
-    switch(GLOBAL_SETTINGS.MUSIC) {
+    if(GLOBAL_SETTINGS.PLAY_MUSIC=='t') {
 
-        case 'w' : 
-            music=Mix_LoadMUS("the_weeknd_sacrifice.mp3");
+        switch(GLOBAL_SETTINGS.MUSIC) {
+
+            case 'w' : 
+                music=Mix_LoadMUS("the_weeknd_sacrifice.mp3");
 
             break;
-        case 's' :
-            music=Mix_LoadMUS("Sleep Away.mp3");
-            break;
-        case 'r' :
-            music=Mix_LoadMUS("Rick-Astley-Never-Gonna-Give-You-Up.mp3");
+
+            case 's' :
+                music=Mix_LoadMUS("Sleep Away.mp3");
             break;
 
+            case 'r' :
+                music=Mix_LoadMUS("Rick-Astley-Never-Gonna-Give-You-Up.mp3");
+            break;
+
+        }
+
+        Mix_PlayMusic(music, 1000);
     }
-
-    Mix_PlayMusic(music, -1);
-
+    
     unsigned long long int START_TIME=time(NULL); 
 
     GLOBAL_LAST_HUNGER_TIME_QUERRY=START_TIME;
@@ -780,7 +787,7 @@ void USER_REGISTERATION() {
 
     FILE *SETTINGS=fopen("user_settings.txt","a+");
 
-    fprintf(SETTINGS,"%s g r n ",USERNAME);
+    fprintf(SETTINGS,"%s g r n f ",USERNAME);
 
     fclose(SETTINGS);
 
@@ -1441,6 +1448,22 @@ void OPEN_MUSIC_MENU() {
 
         char LARGE_STRING[70]="Current Music is : ";
 
+        if(GLOBAL_SETTINGS.PLAY_MUSIC=='f') {
+
+            attron(RED_COLORED_CELL); mvprintw(3,COLUMN/2 -27,"Music is Currently Off. Press Backspace to Turn it On.");
+
+            attroff(RED_COLORED_CELL);
+
+        }
+
+        else {
+
+            attron(GREEN_COLORED_CELL); mvprintw(3,COLUMN/2 -27,"Music is Currently On. Press Backspace to Turn it Off.");
+
+            attroff(GREEN_COLORED_CELL);
+
+        }
+
         char COLOR_SPELLED_OUT[100];
 
         if(GLOBAL_SETTINGS.MUSIC=='s') {
@@ -1461,9 +1484,11 @@ void OPEN_MUSIC_MENU() {
 
         mvprintw(1,COLUMN/2 -strlen(LARGE_STRING)/2,"%s",LARGE_STRING);
 
-        attroff(GOLD_COLORED_CELL);
+        attroff(GOLD_COLORED_CELL); refresh();
 
         int INPUT=getch();
+
+        
 
         if(y==ROW/5) {
 
@@ -1479,7 +1504,7 @@ void OPEN_MUSIC_MENU() {
 
                 mvprintw(2*ROW/5, COLUMN/2 -5 ,"Sleep Away");
 
-                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);                
+                attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);                
 
             }
             else if(INPUT=='e' || INPUT=='E') {
@@ -1488,6 +1513,20 @@ void OPEN_MUSIC_MENU() {
 
                 move(ROW/5,0);
 
+            }
+            
+            else if(INPUT==KEY_BACKSPACE) {
+
+                if(GLOBAL_SETTINGS.PLAY_MUSIC=='t') {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='f';
+                }
+                else {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='t';
+                }
+
+                move(ROW/5 ,0);
             }
             else {
                 move(ROW/5,0);
@@ -1508,7 +1547,7 @@ void OPEN_MUSIC_MENU() {
 
                 mvprintw(ROW/5, COLUMN/2 -12 ,"Never Gonna Give You Up");
 
-                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+                attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
                 refresh();
 
@@ -1525,7 +1564,7 @@ void OPEN_MUSIC_MENU() {
 
                 mvprintw(3*ROW/5, COLUMN/2 -5 ,"Sacrifice");
 
-                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+                attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
                 refresh();
 
@@ -1535,6 +1574,21 @@ void OPEN_MUSIC_MENU() {
 
                 move(2*ROW/5,0);
             }
+            
+            else if(INPUT==KEY_BACKSPACE) {
+
+                if(GLOBAL_SETTINGS.PLAY_MUSIC=='t') {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='f';
+                }
+                else {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='t';
+                }
+
+                move(2*ROW/5,0);
+            }
+
             else {
                 move(2*ROW/5,0);
             }
@@ -1553,7 +1607,7 @@ void OPEN_MUSIC_MENU() {
 
                 mvprintw(2*ROW/5, COLUMN/2 -5 ,"Sleep Away");
 
-                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+                attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
                 refresh();
 
@@ -1570,13 +1624,27 @@ void OPEN_MUSIC_MENU() {
 
                 mvprintw(4*ROW/5, COLUMN/2 -2 ,"Back");
 
-                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+                attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
                 refresh();
 
             }
             else if(INPUT=='e' || INPUT=='E') {
                 GLOBAL_SETTINGS.MUSIC='w';
+
+                move(3*ROW/5,0);
+            }
+            
+            else if(INPUT==KEY_BACKSPACE) {
+
+                if(GLOBAL_SETTINGS.PLAY_MUSIC=='t') {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='f';
+                }
+                else {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='t';
+                }
 
                 move(3*ROW/5,0);
             }
@@ -1598,7 +1666,7 @@ void OPEN_MUSIC_MENU() {
 
                 mvprintw(3*ROW/5, COLUMN/2 -5 ,"Sacrifice");
 
-                attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+                attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
                 refresh();
 
@@ -1607,6 +1675,20 @@ void OPEN_MUSIC_MENU() {
                 
                 break;
 
+            }
+            
+            else if(INPUT==KEY_BACKSPACE) {
+
+                if(GLOBAL_SETTINGS.PLAY_MUSIC=='t') {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='f';
+                }
+                else {
+
+                    GLOBAL_SETTINGS.PLAY_MUSIC='t';
+                }
+
+                move(4*ROW/5,0);
             }
             else {
                 move(4*ROW/5,0);
@@ -1625,9 +1707,9 @@ void OPEN_MUSIC_MENU() {
 
         char *PTR=strstr(TEMP_STRING,GLOBAL_LOGGED_IN_USER); 
 
-        PTR+=strlen(GLOBAL_LOGGED_IN_USER)+1;//move PTR to first char location g r n    \green rickroll normal/
+        PTR+=strlen(GLOBAL_LOGGED_IN_USER)+1;//move PTR to first char location g r n f  \green rickroll normal false/
 
-        PTR[2]=GLOBAL_SETTINGS.MUSIC;
+        PTR[2]=GLOBAL_SETTINGS.MUSIC; PTR[6]=GLOBAL_SETTINGS.PLAY_MUSIC;
 
         fclose(SETTINGS_FILE);
 
@@ -2075,6 +2157,8 @@ void HANDLE_GUEST_USER() {
 
     GLOBAL_SETTINGS.MUSIC='s'; //sleep away, rick roll, sacrifice
 
+    GLOBAL_SETTINGS.PLAY_MUSIC='f';
+
 }
 void PRINT_COLOR_GUI() {
 
@@ -2154,11 +2238,15 @@ void LOAD_USER_SETTINGS() {
 
             fscanf(SETTINGS_FILE," %c",&GLOBAL_SETTINGS.DIFFICULTY);
 
+            fscanf(SETTINGS_FILE," %c",&GLOBAL_SETTINGS.PLAY_MUSIC);
+
             break;
 
         }
 
         fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);    fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);    fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);
+
+        fscanf(SETTINGS_FILE," %c",&DUMMY_VAR);
 
     }
 
@@ -2237,6 +2325,8 @@ void PRINT_MUSIC_MENU() {
 
     char LARGE_STRING[70]="Current Music is : ";
 
+    
+
     char COLOR_SPELLED_OUT[100];
 
     if(GLOBAL_SETTINGS.MUSIC=='s') {
@@ -2267,7 +2357,7 @@ void PRINT_MUSIC_MENU() {
 
     mvprintw(ROW/5, COLUMN/2 -12 ,"Never Gonna Give You Up");
 
-    attroff(GOLD_HIGHLIGHT); attrset(A_BLINK);
+    attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
     refresh();
 
@@ -2384,6 +2474,11 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
                 }
             }
 
+            for(int i=0 ; i<4 ; i++) {
+                for(int j=0 ; j<6 ; j++) {
+                    fscanf(SAVES,"%c",&GLOBAL_ALL_THEMES_COLOR[i][j]);
+                }
+            }
         }
 
         fclose(SAVES);
@@ -2907,9 +3002,7 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     int TEMP=GENERATE_ENTRY_EXIT(FLOOR,START_SECTOR);   
 
-    GENERATE_PILLARS(FLOOR);    //fill pillars
-
-    //password doors later | password door is either reverse ordered or normal or has changing password
+    GENERATE_PILLARS(FLOOR);    
 
     int ANOTHER_RANDOM_QUERRY=rand()%100+1;
 
@@ -3218,7 +3311,21 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     //theme randomizer here.
     
-    
+    if(FLOOR_NUMBER==4) {////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+        int RANDOM=rand()%6;
+
+        GLOBAL_ALL_THEMES_COLOR[3][RANDOM]='y';
+
+
+
+
+
+    }
+
+
+
+
     
     
     
@@ -6455,6 +6562,12 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
             }
         }
 
+        for(int i=0 ; i<4 ; i++) {
+            for(int j=0 ; j<6 ; j++) {
+                fprintf(SAVE_LOCATION,"%c",GLOBAL_ALL_THEMES_COLOR[i][j]);
+            }
+        }
+
         fclose(SAVE_LOCATION);
 
     }
@@ -6732,6 +6845,23 @@ void SAVE_ONTO_SCOREBOARD(int DELTA_T_PLAYED) {
     fclose(WRITE_TO_SCORES);
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 //------------------------------------------------------------End----------------------------------------------------------------------//
