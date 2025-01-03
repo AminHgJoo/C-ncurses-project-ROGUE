@@ -75,7 +75,7 @@ typedef struct coords {
 
 }   COORDS;
 
-typedef struct inventory {//this struct must be saved
+typedef struct inventory_and_stats {//this struct must be saved
 
     int x;
 
@@ -209,6 +209,18 @@ int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
 
 void GENERATE_ANCIENT_KEY(POINT [38][144]);   
 
+void SPAWN_FOOD(int , int , int ,POINT [38][144]);
+
+void SPAWN_BLACK_GOLD(int , int , int ,POINT [38][144]);
+
+void SPAWN_GOLD(int , int , int , POINT [38][144]);
+
+void SPAWN_TRAPS(int, int , int , POINT [38][144]);
+
+void SPAWN_WEAPONS(int, int ,int ,POINT [38][144]);
+
+void SPAWN_SPELLS(int , int ,int  ,POINT [38][144]);
+
 //-------------------------------------------In Game Functions(Movement & Exploration)------------------------------------------------//
 
 void HANDLE_USER_INPUT_AND_MOVE_HERO(char *,POINT [4][38][144]);
@@ -340,7 +352,11 @@ int main() {
 
     if(GLOBAL_EXIT_CODE==2) {
 
-        SAVE_ONTO_SCOREBOARD(FINISH_TIME-START_TIME+GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED);
+        if(GLOBAL_IS_GUEST==FALSE)  {
+
+            SAVE_ONTO_SCOREBOARD(FINISH_TIME-START_TIME+GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED);
+
+        }
 
     } 
     
@@ -2489,6 +2505,12 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
 
 void GENERATE_MAP(POINT MAP[4][38][144]) {
 
+    for(int i=0 ; i<4 ; i++) {//default theme values
+        for(int j=0 ; j<6 ; j++) {
+            GLOBAL_ALL_THEMES_COLOR[i][j]=0;
+        }
+    }
+
     int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1,1);
 
     NEXT_START=GENERATE_FLOOR_SKELETON(MAP[1],NEXT_START,2);
@@ -2531,7 +2553,7 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {
 }
 
 int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUMBER) {///////////////////
-    
+
     for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, COLOR, IS_START, and passdoor type.
 
         for(int j=0 ; j<144 ; j++) {
@@ -3310,53 +3332,61 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
     }
 
     //theme randomizer here.
+
+    int TREASURE_SECTOR=-1;
     
-    if(FLOOR_NUMBER==4) {////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    if(FLOOR_NUMBER==4) {
 
-        int RANDOM=rand()%6;
+        for(int i=0 ; i<38 ; i++) {
+            
+            int BREAK=0;
 
-        GLOBAL_ALL_THEMES_COLOR[3][RANDOM]='y';
+            for(int j=0 ; j<144 ; j++) {
 
+                if(FLOOR[i][j].IS_START==-1) {
+                    
+                    TREASURE_SECTOR=GIVE_SECTOR_NUMBER(j,i);
 
+                    GLOBAL_ALL_THEMES_COLOR[3][TREASURE_SECTOR-1]='y';
 
+                    break;
+                }
 
+            }
 
+            if(BREAK==TRUE) {
+                break;
+            }
+        }
     }
 
-
-
-
-    
-    
-    
-    //generate pickups, items & themes!!!!!!
-
-    GENERATE_ANCIENT_KEY(FLOOR); //one ancient key per floor
-
-
-
-
-
-
-    //end of non-secret gen------------------------------------------------------------------------------------
+    GENERATE_ANCIENT_KEY(FLOOR); 
 
     for(int i=0 ; i<38 ; i++) {
-        for(int j=0 ; j<144 ; j++) { 
-            FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
-        }
-    }   
+        for(int j=0 ; j<144 ; j++) {
 
-    //secret door & trap generation. change real contents but not symbol!--------------------------------------------
+            FLOOR[i][j].REAL_CONTENTS=FLOOR[i][j].SYMBOL;
+
+        }
+    }
+
+    if(TREASURE_SECTOR!=-1) {
+
+        SPAWN_TRAPS(9,10,TREASURE_SECTOR,FLOOR);
+
+        SPAWN_BLACK_GOLD(3,45,TREASURE_SECTOR,FLOOR);
+
+        SPAWN_GOLD(7,40,TREASURE_SECTOR,FLOOR);
+
+    }
 
     COORDS START_COORDS=GIVE_STAIRS_ADDRESS_ENTRY(FLOOR);   COORDS END_COORDS=GIVE_STAIRS_ADDRESS_EXIT(FLOOR);
 
     int START_SECTOR_FOR_RNG=GIVE_SECTOR_NUMBER(START_COORDS.x,START_COORDS.y); int END_SECTOR=GIVE_SECTOR_NUMBER(END_COORDS.x,END_COORDS.y);
 
-    //make end and start sectors not have secrets. but end may be password protected.
+    int RANDOM_QUERRY=rand()%100+1; int SECRET_ROOM_SECTOR=-1;
 
-    int RANDOM_QUERRY=rand()%100+1; int SECRET_ROOM_SECTOR;
-
-    if(RANDOM_QUERRY<=40 && PASSWORD_DOOR_EXISTS==FALSE) {//attempt to generate secret room at edges
+    if(RANDOM_QUERRY<=40 && PASSWORD_DOOR_EXISTS==FALSE) {
 
         while(TRUE) {
 
@@ -3492,17 +3522,89 @@ int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUM
 
     }
 
-    //add traps
+    //if an object didn't have a specified color, set their color to room theme
 
-    
+    if(START_SECTOR!=-1) {//that means start sector is accessed via stairs. and is an enchant room.
 
+        SPAWN_SPELLS(8,30,START_SECTOR,FLOOR);
 
+        GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][START_SECTOR-1]='b';
 
+    }
 
+    int TRIAL_FOR_NIGHTMARE_ROOM=rand()%100+1;
 
+    int NIGHTMARE_SECTOR=-1;
 
+    if(TRIAL_FOR_NIGHTMARE_ROOM<=40) {
 
+        for(int k=0 ; k<6 ; k++) {
 
+            if(GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][k]==0) {
+
+                GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][k]='r';
+
+                SPAWN_GOLD(2,4,k+1,FLOOR);
+
+                SPAWN_FOOD(1,20,k+1,FLOOR);
+
+                SPAWN_WEAPONS(1,1,k+1,FLOOR);
+
+                SPAWN_SPELLS(1,5,k+1,FLOOR);
+
+                SPAWN_TRAPS(2,30,k+1,FLOOR);
+
+                NIGHTMARE_SECTOR=k+1;
+
+                break;
+
+            }
+
+        }
+
+    }
+  
+    if(SECRET_ROOM_SECTOR!=-1) {
+
+        SPAWN_SPELLS(8,30,SECRET_ROOM_SECTOR,FLOOR);
+
+        GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][SECRET_ROOM_SECTOR-1]='b';
+
+    }
+
+    for(int i=0 ; i<6 ; i++) {//if theme is still 0, turn it into 'w' (normal room).
+
+        if(GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][i]==0) {
+
+            GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][i]='w';
+
+            SPAWN_GOLD(2,4,i+1,FLOOR);
+
+            SPAWN_FOOD(1,20,i+1,FLOOR);
+
+            SPAWN_WEAPONS(1,1,i+1,FLOOR);
+
+            SPAWN_SPELLS(1,5,i+1,FLOOR);
+
+            SPAWN_TRAPS(2,30,i+1,FLOOR);
+
+        }
+
+    }
+
+    for(int i=0 ; i<38 ; i++) {//if a cell isn't a walkway or a special tile, turn its color into theme color.
+
+        for(int j=0 ; j<144 ; j++) {
+
+            if(FLOOR[i][j].COLOR=='w' && FLOOR[i][j].SYMBOL!='#' && FLOOR[i][j].SYMBOL!='&') {
+
+                FLOOR[i][j].COLOR=GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][GIVE_SECTOR_NUMBER(j,i)-1];
+
+            }
+
+        }
+
+    }
 
     return TEMP;
 
@@ -4357,13 +4459,15 @@ void GENERATE_ANCIENT_KEY(POINT FLOOR[38][144]) {
 
 } 
 
-void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
+void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//////////////////////////////////////////////////////////////////
 
     int USER_INPUT=getch();
 
     int VALID;
 
-    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE && USER_INPUT!='f' && USER_INPUT!='F' && USER_INPUT!='g' && USER_INPUT!='G') {
+    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE && USER_INPUT!='f' && USER_INPUT!='F' && USER_INPUT!='g' && USER_INPUT!='G' 
+    
+    && GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_STATS.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_STATS.x,GLOBAL_INVENTORY_AND_STATS.y)-1]!='r') {
 
         int CURRENT_X=GLOBAL_INVENTORY_AND_STATS.x,CURRENT_Y=GLOBAL_INVENTORY_AND_STATS.y;
 
@@ -4389,7 +4493,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
     }
 
-    else if(USER_INPUT=='f' || USER_INPUT=='F') {//movement Macro
+    else if((USER_INPUT=='f' || USER_INPUT=='F') && GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_STATS.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_STATS.x,GLOBAL_INVENTORY_AND_STATS.y)-1]!='r') {//movement Macro
 
         int MACRO_MOVEMENT=getch();
 
@@ -4421,7 +4525,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
     }
 
-    else if(USER_INPUT=='g' || USER_INPUT=='G') {
+    else if(USER_INPUT=='g' || USER_INPUT=='G'|| GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_STATS.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_STATS.x,GLOBAL_INVENTORY_AND_STATS.y)-1]=='r') {
 
         USER_INPUT=getch();
 
@@ -5853,11 +5957,16 @@ void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
         attroff(GREEN_COLORED_CELL);
 
         for(int i=0 ; i<38 ; i++) {
+            int BREAK=0;
             for(int j=0 ; j<144 ; j++) {
                 if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].SYMBOL=='&' && MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].COLOR!='g') {
                     MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][i][j].COLOR='g';
+                    BREAK++;
                     break;
                 }
+            }
+            if(BREAK==1) {
+                break;
             }
         }
 
@@ -5983,7 +6092,7 @@ int HANDLE_ANCIENT_KEY_USAGE() {
 
 }
 
-void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {//---------------------------------------seems OK-----------//
+void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
     //change picked up items' color to theme default
     switch(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][GLOBAL_INVENTORY_AND_STATS.y][GLOBAL_INVENTORY_AND_STATS.x].REAL_CONTENTS) {
 
@@ -6409,12 +6518,6 @@ void START_GAME() {
     GLOBAL_INVENTORY_AND_STATS.ARROW=0; GLOBAL_INVENTORY_AND_STATS.DAGGER=0; GLOBAL_INVENTORY_AND_STATS.MACE=1; 
 
     GLOBAL_INVENTORY_AND_STATS.SWORD=0; GLOBAL_INVENTORY_AND_STATS.WAND=0; GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED=0;
-
-    for(int i=0 ; i<4 ; i++) {
-        for(int j=0 ; j<6 ; j++) {
-            GLOBAL_ALL_THEMES_COLOR[i][j]=0;
-        }
-    }
 
     setlocale(LC_ALL, "");  srand(time(NULL));
 
@@ -6846,17 +6949,245 @@ void SAVE_ONTO_SCOREBOARD(int DELTA_T_PLAYED) {
 
 }
 
+void SPAWN_FOOD(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
 
+    int RANDOM;
 
+    for(int i=((SECTOR-1)/3)*19 ; i<19+((SECTOR-1)/3)*19 ; i++) {
 
+        for(int j=((SECTOR-1)%3)*48 ; j<48+((SECTOR-1)%3)*48 ; j++) {
 
+            if(FLOOR[i][j].SYMBOL=='.' && MAX_NUMBER>0 && FLOOR[i][j].REAL_CONTENTS!='^') {
 
+                RANDOM=rand()%100+1;
 
+                if(RANDOM<=CHANCE) {
+                    
+                    FLOOR[i][j].COLOR='r';
 
+                    FLOOR[i][j].REAL_CONTENTS='~';
 
+                    FLOOR[i][j].SYMBOL='~';
 
+                    MAX_NUMBER--;
 
+                }
 
+            }
+
+        }
+    }
+
+}
+
+void SPAWN_GOLD(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
+
+    int RANDOM;
+
+    for(int i=((SECTOR-1)/3)*19 ; i<19+((SECTOR-1)/3)*19 ; i++) {
+
+        for(int j=((SECTOR-1)%3)*48 ; j<48+((SECTOR-1)%3)*48 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='.' && MAX_NUMBER>0 && FLOOR[i][j].REAL_CONTENTS!='^') {
+
+                RANDOM=rand()%100+1;
+
+                if(RANDOM<=CHANCE) {
+
+                    FLOOR[i][j].COLOR='y';
+
+                    FLOOR[i][j].SYMBOL='$';
+
+                    FLOOR[i][j].REAL_CONTENTS='$';
+
+                    MAX_NUMBER--;
+
+                }
+
+            }
+
+        }
+    }
+
+}
+
+void SPAWN_BLACK_GOLD(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
+
+    int RANDOM;
+
+    for(int i=((SECTOR-1)/3)*19 ; i<19+((SECTOR-1)/3)*19 ; i++) {
+
+        for(int j=((SECTOR-1)%3)*48 ; j<48+((SECTOR-1)%3)*48 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='.' && MAX_NUMBER>0 && FLOOR[i][j].REAL_CONTENTS!='^') {
+
+                RANDOM=rand()%100+1;
+
+                if(RANDOM<=CHANCE) {
+
+                    FLOOR[i][j].COLOR='o';
+
+                    FLOOR[i][j].REAL_CONTENTS='*';
+
+                    FLOOR[i][j].SYMBOL='*';
+
+                    MAX_NUMBER--;
+
+                }
+
+            }
+
+        }
+    }
+
+}
+
+void SPAWN_TRAPS(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
+
+    int RANDOM;
+
+    for(int i=((SECTOR-1)/3)*19 ; i<19+((SECTOR-1)/3)*19 ; i++) {
+
+        for(int j=((SECTOR-1)%3)*48 ; j<48+((SECTOR-1)%3)*48 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='.' && MAX_NUMBER>0) {
+
+                RANDOM=rand()%100+1;
+
+                if(RANDOM<=CHANCE) {
+
+                    FLOOR[i][j].REAL_CONTENTS='^';
+
+                    MAX_NUMBER--;
+
+                }
+
+            }
+
+        }
+    }
+
+}
+
+void SPAWN_WEAPONS(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
+
+    int RANDOM;
+
+    for(int i=((SECTOR-1)/3)*19 ; i<19+((SECTOR-1)/3)*19 ; i++) {
+
+        for(int j=((SECTOR-1)%3)*48 ; j<48+((SECTOR-1)%3)*48 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='.' && MAX_NUMBER>0 && FLOOR[i][j].REAL_CONTENTS!='^') {
+
+                RANDOM=rand()%100+1;
+
+                if(RANDOM<=CHANCE) {
+
+                    RANDOM=rand()%5;
+
+                    switch(RANDOM) {
+
+                        case 0 :
+
+                            FLOOR[i][j].SYMBOL='M';
+
+                            FLOOR[i][j].REAL_CONTENTS='M';
+
+                            break;
+                        case 1 :
+
+                            FLOOR[i][j].REAL_CONTENTS='A';
+
+                            FLOOR[i][j].SYMBOL='A';
+
+                            break; 
+                        case 2 :
+
+                            FLOOR[i][j].REAL_CONTENTS=-2;
+
+                            FLOOR[i][j].SYMBOL=-2; //wand
+
+                            break;
+                        case 3 :
+
+                            FLOOR[i][j].REAL_CONTENTS=-3;
+
+                            FLOOR[i][j].SYMBOL=-3; //sword
+
+                            break;
+                        case 4 :
+
+                            FLOOR[i][j].REAL_CONTENTS=-4;
+
+                            FLOOR[i][j].SYMBOL=-4; //dagger
+
+                            break;
+                    }
+
+                    MAX_NUMBER--;
+
+                }
+
+            }
+
+        }
+    }
+
+}
+
+void SPAWN_SPELLS(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
+
+    int RANDOM;
+
+    for(int i=((SECTOR-1)/3)*19 ; i<19+((SECTOR-1)/3)*19 ; i++) {
+
+        for(int j=((SECTOR-1)%3)*48 ; j<48+((SECTOR-1)%3)*48 ; j++) {
+
+            if(FLOOR[i][j].SYMBOL=='.' && MAX_NUMBER>0 && FLOOR[i][j].REAL_CONTENTS!='^') {
+
+                RANDOM=rand()%100+1;
+
+                if(RANDOM<=CHANCE) {
+
+                    FLOOR[i][j].COLOR='b';
+
+                    RANDOM=rand()%3;
+
+                    switch(RANDOM) {
+
+                        case 0 :
+
+                            FLOOR[i][j].REAL_CONTENTS='s';
+
+                            FLOOR[i][j].SYMBOL='s'; //speed
+
+                            break;
+                        case 1 :
+
+                            FLOOR[i][j].REAL_CONTENTS='h';
+
+                            FLOOR[i][j].SYMBOL='h';//health
+
+                            break; 
+                        case 2 :
+
+                            FLOOR[i][j].REAL_CONTENTS='d';
+
+                            FLOOR[i][j].SYMBOL='d'; //damage
+
+                            break;
+                    }
+
+                    MAX_NUMBER--;
+
+                }
+
+            }
+
+        }
+    }
+
+}
 
 
 
