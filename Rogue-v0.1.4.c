@@ -102,6 +102,11 @@ int GLOBAL_NUMBER_OF_ANCIENT_KEYS=0;
 
 int GLOBAL_NUMBER_OF_BROKEN_ANCIENT_KEYS=0;
 
+//----------------------------------------------Message Handling--------------------------------------------------------------------//
+
+char GLOBAL_MOST_RECENT_MESSAGE[100];
+
+char GLOBAL_MOST_RECENT_COLOR;
 
 //-----------------------------------------------Passkey Doors Handling-------------------------------------------------------------//
 
@@ -290,6 +295,8 @@ int main() {
 
         HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
 
+        CLEAR_MESSAGE_BAR();
+
         UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);
 
         PRINT_MAP_ON_SCREEN(MAP);
@@ -300,7 +307,7 @@ int main() {
 
         }
 
-        CLEAR_MESSAGE_BAR();
+        
 
     }   
 
@@ -4124,7 +4131,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {///
 
     int VALID;
 
-    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE && USER_INPUT!='f' && USER_INPUT!='F') {
+    if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE && USER_INPUT!='f' && USER_INPUT!='F' && USER_INPUT!='g' && USER_INPUT!='G') {
 
         int CURRENT_X=GLOBAL_PLAYER_X_COORD,CURRENT_Y=GLOBAL_PLAYER_Y_COORD;
 
@@ -4978,12 +4985,18 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later./////////////////////////////////////////////////
 
     clear();
+    
+    TURN_ON_COLOR_FOR_MAP_PRINT(GLOBAL_MOST_RECENT_COLOR);
+
+    mvprintw(0,0,"%s",GLOBAL_MOST_RECENT_MESSAGE);
+
+    TURN_OFF_COLOR_FOR_MAP_PRINT(GLOBAL_MOST_RECENT_COLOR);
 
     move(0,0);
 
     attrset(WHITE_COLORED_CELL);
 
-    for(int i=0 ; i<38 ; i++) {
+    for(int i=1 ; i<37 ; i++) {
 
         for(int j=0 ; j<144 ; j++) {
 
@@ -5077,11 +5090,15 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
     attroff(WHITE_COLORED_CELL);
 
+    mvprintw(ROW-2,0,"Keys: %d | Broken Keys: %d",GLOBAL_NUMBER_OF_ANCIENT_KEYS,GLOBAL_NUMBER_OF_BROKEN_ANCIENT_KEYS);
+
     mvprintw(ROW-1,0,"Floor :%d",GLOBAL_PLAYER_FLOOR+1);
 
     move(0,0);
 
     refresh();
+
+    strcpy(GLOBAL_MOST_RECENT_MESSAGE,"\0");
 
 }
 
@@ -5671,6 +5688,10 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
             attron(GOLD_COLORED_CELL);
 
             PRINT_MESSAGE("Picked Up an Ancient Key!");
+
+            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"Picked Up an Ancient Key!");
+
+            GLOBAL_MOST_RECENT_COLOR='y';
 
             attroff(GOLD_COLORED_CELL);
 
