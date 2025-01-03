@@ -63,8 +63,6 @@ typedef struct door {
 
     char DIRECTION;
 
-
-
 } DOOR;
 
 typedef struct coords {
@@ -121,6 +119,8 @@ int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_o
 int GLOBAL_SHOW_ALL=FALSE;
 
 int GLOBAL_MAX_HP; //no need to save. determined based on settings.
+
+unsigned long long int GLOBAL_LAST_HUNGER_TIME_QUERRY;
 
 //----------------------------------------------Message Handling--------------------------------------------------------------------//
 
@@ -216,6 +216,10 @@ void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
 
 void FIND_MAX_HP();
 
+void PERFORM_DEATH_CHECK();
+
+void OPEN_DEATH_MENU();
+
 //--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
 
 void PASSWORD_BACKGROUND_CHECK();
@@ -229,6 +233,8 @@ int HANDLE_ANCIENT_KEY_USAGE();
 //-------------------------------------------------Item Pickups Handling------------------------------------------------------------------//
 
 void HANDLE_ITEM_PICKUPS(POINT [4][38][144],char *);
+
+void REDUCE_HUNGER();
 
 //-------------------------------------------------------------main-----------------------------------------------------------------------//
 
@@ -278,20 +284,19 @@ int main() {
 
     Mix_PlayMusic(music, -1);
 
-
-
-
-
-    
     unsigned long long int START_TIME=time(NULL); 
+
+    GLOBAL_LAST_HUNGER_TIME_QUERRY=START_TIME;
 
     halfdelay(10); //1 sec delay
 
     char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);    PRINT_MAP_ON_SCREEN(MAP);
 
-    while(GLOBAL_EXIT_CODE==0) {//game loop
+    while(GLOBAL_EXIT_CODE==0) {//game loop//////////////////// more background checks needed
 
         HANDLE_USER_INPUT_AND_MOVE_HERO(&TRANSITION_STORAGE,MAP);
+
+        REDUCE_HUNGER();
 
         CLEAR_MESSAGE_BAR();
 
@@ -305,19 +310,23 @@ int main() {
 
         }
 
-    }   
+        PERFORM_DEATH_CHECK();
 
-    //write function to handle user exit. saved | unsaved | end of game exit.
+    }   
 
     unsigned long long int FINISH_TIME=time(NULL);
 
     if(GLOBAL_EXIT_CODE==3) {
 
-        SAVE_GAME(MAP,FINISH_TIME-START_TIME);
+        SAVE_GAME(MAP,FINISH_TIME-START_TIME+GLOBAL_INVENTORY_AND_STATS.TIME_PLAYED);
 
     }
 
-    //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES. 
+    if(GLOBAL_EXIT_CODE==2) {//update scoreboard. display victory message
+
+
+
+    } 
     
     SHUTDOWN_GAME(music);
 
@@ -2374,7 +2383,7 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
 
 }
 
-void GENERATE_MAP(POINT MAP[4][38][144]) {//
+void GENERATE_MAP(POINT MAP[4][38][144]) {
 
     int NEXT_START=GENERATE_FLOOR_SKELETON(MAP[0],-1,1);
 
@@ -2415,16 +2424,9 @@ void GENERATE_MAP(POINT MAP[4][38][144]) {//
         }
     }
 
-                          
-
-    
-
-
-
-
 }
 
-int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUMBER) {/////////
+int GENERATE_FLOOR_SKELETON(POINT FLOOR[38][144],int START_SECTOR, int FLOOR_NUMBER) {///////////////////
     
     for(int i=0 ; i<38 ; i++) {//insert default values for IS_DISCOVERED, SYMBOL, COLOR, IS_START, and passdoor type.
 
@@ -4315,7 +4317,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
 }
 
-int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {//
+int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {////////////////////////
 
     switch(USER_INPUT) //inventory and other stuff will be implemented later. //handle item pickups DIFFERENTLY
     //movement with numpad added
@@ -5097,7 +5099,7 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
 }
 
-void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later./////////////////////////////////////////////////
+void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {
 
     clear();
     
@@ -5207,7 +5209,13 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
     mvprintw(ROW-2,0,"Keys: %d | Broken Keys: %d",GLOBAL_INVENTORY_AND_STATS.KEYS,GLOBAL_INVENTORY_AND_STATS.BROKEN_KEYS);
 
-    mvprintw(ROW-1,0,"Floor :%d",GLOBAL_INVENTORY_AND_STATS.FLOOR+1);
+    mvprintw(ROW-1,0,"Floor : %d |",GLOBAL_INVENTORY_AND_STATS.FLOOR+1);
+
+    mvprintw(ROW-1,13,"HP : %d/%d | Hunger : %d/100 | Gold : %d | Score : %d"
+    
+    ,GLOBAL_INVENTORY_AND_STATS.HP,GLOBAL_MAX_HP,GLOBAL_INVENTORY_AND_STATS.HUNGER
+    
+    ,GLOBAL_INVENTORY_AND_STATS.GOLD,GLOBAL_INVENTORY_AND_STATS.SCORE);
 
     move(0,0);
 
@@ -5217,7 +5225,7 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {//add HP & Hunger later.///////
 
 }
 
-void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT MAP[4][38][144]) {//
+void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT MAP[4][38][144]) {
 
     if(MAP[GLOBAL_INVENTORY_AND_STATS.FLOOR][GLOBAL_INVENTORY_AND_STATS.y][GLOBAL_INVENTORY_AND_STATS.x].REAL_CONTENTS=='+' 
     
@@ -5254,14 +5262,6 @@ void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT MAP[4][38][144]) {/
         HANDLE_DOOR_PASSKEY_GENERATION(MAP);
 
     }
-
-
-
-
-
-
-
-
 
 }
 
@@ -6046,7 +6046,7 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
 
         char FREE_SPACE[100];
 
-        clear(); cbreak(); attron(GOLD_COLORED_CELL); echo();
+        clear(); cbreak(); attron(GOLD_COLORED_CELL); echo(); curs_set(1);
 
         mvprintw(0,COLUMN/2 -8,"Name Your Save.");
 
@@ -6054,7 +6054,7 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
 
         move(ROW/2 -1 , COLUMN/2 -8); refresh(); attroff(GOLD_COLORED_CELL);
 
-        getstr(FREE_SPACE);
+        getstr(FREE_SPACE); curs_set(0); noecho();
 
         char STRING[100]="saves_";
 
@@ -6138,3 +6138,66 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
     }
 }
 
+void PERFORM_DEATH_CHECK() {
+
+    if(GLOBAL_INVENTORY_AND_STATS.HP<=0) {
+
+        OPEN_DEATH_MENU();
+
+    }
+
+}
+
+void OPEN_DEATH_MENU() {
+
+    GLOBAL_EXIT_CODE=1;
+
+    clear(); attron(RED_COLORED_CELL); cbreak();
+
+    mvprintw(ROW/2, COLUMN/2 -17 ,"You Died! Press a Key to Continue.");
+
+    refresh();  attroff(RED_COLORED_CELL); getch();
+
+}
+
+void REDUCE_HUNGER() {
+
+    unsigned long long int NEW_QUERRY=time(NULL);
+
+    if(GLOBAL_INVENTORY_AND_STATS.HUNGER==0) {
+
+        if(NEW_QUERRY-GLOBAL_LAST_HUNGER_TIME_QUERRY>=10) {
+
+            GLOBAL_INVENTORY_AND_STATS.HP--; attron(RED_COLORED_CELL);
+
+            PRINT_MESSAGE("You Are Starving!"); attroff(RED_COLORED_CELL); refresh();
+
+            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Are Starving!");
+
+            GLOBAL_MOST_RECENT_COLOR='r';
+
+            GLOBAL_LAST_HUNGER_TIME_QUERRY=NEW_QUERRY;
+
+        }
+
+    }
+
+    else {
+
+        if(NEW_QUERRY-GLOBAL_LAST_HUNGER_TIME_QUERRY>=5) {
+
+            GLOBAL_INVENTORY_AND_STATS.HUNGER--;
+
+            GLOBAL_LAST_HUNGER_TIME_QUERRY=NEW_QUERRY;
+
+        }
+
+    }
+
+}
+
+
+
+
+
+//------------------------------------------------------------End----------------------------------------------------------------------//
