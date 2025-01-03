@@ -72,6 +72,7 @@ typedef struct coords {
     int y;
 
 }   COORDS;
+
 typedef struct inventory {//this struct must be saved
 
     int x;
@@ -91,11 +92,11 @@ typedef struct inventory {//this struct must be saved
 
 
 
-//----------------------------------------------Player Inventory/Position Handling--------------------------------------
+//----------------------------------------------Player Inventory/misc Handling--------------------------------------//
 
 SETTINGS GLOBAL_SETTINGS;
 
-INVENTORY_AND_STATS GLOBAL_INVENTORY_AND_STATS;
+INVENTORY_AND_STATS GLOBAL_INVENTORY_AND_STATS;//must be saved at exit
 
 int GLOBAL_LOAD_SAVE=FALSE;
 
@@ -125,7 +126,7 @@ int GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
 
 int GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
 
-//---------------------------------------------------Game Menus---------------------------------------------------------//
+//---------------------------------------------------Game Menus & startup/end---------------------------------------------------------//
 
 void HANDLE_GUEST_USER();
 char GAME_STARTUP_MENU();
@@ -151,6 +152,8 @@ void PRINT_DIFFICULTY_MENU();
 void PRINT_MUSIC_MENU();
 void OPEN_PAUSE_MENU();
 void PRINT_PAUSE_MENU();
+void START_GAME();
+void SHUTDOWN_GAME();
 
 //-----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
 
@@ -216,34 +219,7 @@ void HANDLE_ITEM_PICKUPS(POINT [4][38][144],char *);
 
 int main() {
 
-    GLOBAL_INVENTORY_AND_STATS.FLOOR=0; GLOBAL_INVENTORY_AND_STATS.KEYS=0; GLOBAL_INVENTORY_AND_STATS.BROKEN_KEYS=0;
-
-    setlocale(LC_ALL, "");  srand(time(NULL));
-
-    initscr();  noecho();   curs_set(0);    keypad(stdscr,TRUE);
-
-    getmaxyx(stdscr,ROW,COLUMN);
-
-    if(has_colors()==TRUE) {
-
-        start_color();
-
-        init_pair(1,COLOR_YELLOW,COLOR_BLACK); init_pair(2,COLOR_WHITE,COLOR_YELLOW);
-
-        init_pair(3,COLOR_RED,COLOR_BLACK); init_pair(8,COLOR_WHITE,COLOR_RED);
-
-        init_pair(4,COLOR_GREEN,COLOR_BLACK); init_pair(9,COLOR_WHITE,COLOR_GREEN);
-
-        init_pair(5,COLOR_BLUE,COLOR_BLACK); init_pair(10,COLOR_WHITE,COLOR_BLUE);
-
-        init_pair(6,COLOR_WHITE,COLOR_BLACK); init_pair(11,COLOR_BLACK,COLOR_WHITE);
-
-        init_color(COLOR_ORANGE,690,310,0);
-
-        init_pair(7,COLOR_ORANGE,COLOR_BLACK);
-
-        //add colors later
-    }
+    START_GAME();
 
     char NEXT_MENU=GAME_STARTUP_MENU();
 
@@ -325,14 +301,8 @@ int main() {
     unsigned long long int FINISH_TIME=time(NULL);
 
     //update scoreboard values here. GOLD. SCORE. PLAYTIME. NUMBER OF GAMES. 
-    //end halfdelay mode
-    cbreak();   clear();    attrset(GOLD_COLORED_CELL);  curs_set(0);
-
-    mvprintw(ROW/2,COLUMN/2 -24,"Hope You Had Fun! Press a Key to Close The Game.");
-
-    refresh();  getch();    endwin();
-
-    Mix_CloseAudio();   Mix_FreeMusic(music);   SDL_Quit();
+    
+    SHUTDOWN_GAME(music);
 
     return 0;
 }
@@ -771,9 +741,7 @@ void USER_REGISTERATION() {
 
     fclose(SETTINGS);
 
-    FILE *SAVES=fopen("user_saves_and_inventory.txt","a+");
-
-    fprintf(SAVES,"%s f ",USERNAME);
+    FILE *SAVES=fopen("user_saves_and_inventory.txt","a+"); //create that .txt file.
 
     fclose(SAVES);
 
@@ -5857,5 +5825,50 @@ void PRINT_PAUSE_MENU() {
     attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
     refresh();
+
+}
+
+void START_GAME() {
+
+    GLOBAL_INVENTORY_AND_STATS.FLOOR=0; GLOBAL_INVENTORY_AND_STATS.KEYS=0; GLOBAL_INVENTORY_AND_STATS.BROKEN_KEYS=0;
+
+    setlocale(LC_ALL, "");  srand(time(NULL));
+
+    initscr();  noecho();   curs_set(0);    keypad(stdscr,TRUE);
+
+    getmaxyx(stdscr,ROW,COLUMN);
+
+    if(has_colors()==TRUE) {
+
+        start_color();
+
+        init_pair(1,COLOR_YELLOW,COLOR_BLACK); init_pair(2,COLOR_WHITE,COLOR_YELLOW);
+
+        init_pair(3,COLOR_RED,COLOR_BLACK); init_pair(8,COLOR_WHITE,COLOR_RED);
+
+        init_pair(4,COLOR_GREEN,COLOR_BLACK); init_pair(9,COLOR_WHITE,COLOR_GREEN);
+
+        init_pair(5,COLOR_BLUE,COLOR_BLACK); init_pair(10,COLOR_WHITE,COLOR_BLUE);
+
+        init_pair(6,COLOR_WHITE,COLOR_BLACK); init_pair(11,COLOR_BLACK,COLOR_WHITE);
+
+        init_color(COLOR_ORANGE,690,310,0);
+
+        init_pair(7,COLOR_ORANGE,COLOR_BLACK);
+
+        //add colors later
+    }
+
+}
+
+void SHUTDOWN_GAME(Mix_Music *music) {
+
+    cbreak();   clear();    attrset(GOLD_COLORED_CELL);  curs_set(0);
+
+    mvprintw(ROW/2,COLUMN/2 -24,"Hope You Had Fun! Press a Key to Close The Game.");
+
+    refresh();  getch();    endwin();
+
+    Mix_CloseAudio();   Mix_FreeMusic(music);   SDL_Quit();
 
 }
