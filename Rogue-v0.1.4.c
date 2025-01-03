@@ -20,7 +20,7 @@
 #define BLUE_HIGHLIGHT COLOR_PAIR(10)
 #define WHITE_HIGHLIGHT COLOR_PAIR(11)
 #define ORANGE_COLORED_CELL COLOR_PAIR(7)
-#define COLOR_ORANGE COLOR_CYAN// Cyan has been changed.
+#define COLOR_ORANGE COLOR_CYAN// Cyan has been changed into Orange.
 
 
 
@@ -28,17 +28,14 @@ typedef struct point {
 
     char SYMBOL;
 
-    char REAL_CONTENTS; //conventions for unicode characters !!!!!!!!! to not get confused with genuine chars, negative ASCII values 
-                                                    //will be recognized as potential unicode conventions.
-                                                
-    /* -1:Δ     -2:⚒️      -3:🗡️     -4:🪄     -5:A➳     -6: ⚔️  */ /*Gold : $ | Food : ~ */
+    char REAL_CONTENTS; 
 
     char IS_DISCOVERED;
 
     char PASSWORD_DOOR_TYPE;// '1' '2' 't' 'r' 'l' 1, 2, time, reverse, locked out!
 
-    char COLOR; //y: yellow/golden, r :red , b: blue , w: white ///gold : treasure room
-                ////red : nightmare. blue: spell room. white : regular. 'o'(orange) for password door warning system
+    char COLOR; //y: yellow/golden | r :red | b: blue | w: white | gold : treasure room
+                //red : nightmare | blue: spell room | white : regular | 'o'(orange) for password door warning system
 
     char IS_START; //1 means start, -1 means end
 
@@ -79,7 +76,7 @@ typedef struct coords {
 
 
 
-
+//----------------------------------------------Player Inventory/Position Handling--------------------------------------
 
 SETTINGS GLOBAL_SETTINGS;
 
@@ -101,22 +98,22 @@ int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_o
 
 int GLOBAL_SHOW_ALL=FALSE;
 
+int GLOBAL_NUMBER_OF_ANCIENT_KEYS=0;
+
+int GLOBAL_NUMBER_OF_BROKEN_ANCIENT_KEYS=0;
 
 
+//-----------------------------------------------Passkey Doors Handling-------------------------------------------------------------//
 
 unsigned long long int GLOBAL_MOST_RECENT_PASSWORD_REQUEST_TIME=0;
 
-int GLOBAL_DOOR_PASSWORD=-1; //Changing Floors Resets This Value Back to -1
+int GLOBAL_DOOR_PASSWORD=-1; 
 
 int GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
 
 int GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
 
-
-
-
-
-
+//---------------------------------------------------Game Menus---------------------------------------------------------//
 
 void HANDLE_GUEST_USER();
 char GAME_STARTUP_MENU();
@@ -140,9 +137,12 @@ void LOAD_USER_SETTINGS();
 void HANDLE_SETTINGS();
 void PRINT_DIFFICULTY_MENU();
 void PRINT_MUSIC_MENU();
-void PRINT_MESSAGE(char []);
-void CLEAR_MESSAGE_BAR();
 
+//-----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
+
+void PRINT_MESSAGE(char []);
+
+void CLEAR_MESSAGE_BAR();
 
 void TURN_OFF_COLOR_FOR_MAP_PRINT(char);
 
@@ -170,11 +170,7 @@ int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
 
 void GENERATE_ANCIENT_KEY(POINT [38][144]);   
 
-
-
-
-
-
+//-------------------------------------------In Game Functions(Movement & Exploration)------------------------------------------------//
 
 void HANDLE_USER_INPUT_AND_MOVE_HERO(char *,POINT [4][38][144]);
 
@@ -188,8 +184,7 @@ void REVEAL_ENTIRE_SECTOR(POINT [4][38][144],int );
 
 void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
 
-
-
+//--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
 
 void PASSWORD_BACKGROUND_CHECK();
 
@@ -197,9 +192,13 @@ void HANDLE_DOOR_PASSKEY_GENERATION(POINT [4][38][144]);
 
 void OPEN_PASSKEY_GUI(POINT [4][38][144]);
 
+int HANDLE_ANCIENT_KEY_USAGE();
 
+//-------------------------------------------------Item Pickups Handling------------------------------------------------------------------//
 
+void HANDLE_ITEM_PICKUPS(POINT [4][38][144],char *);
 
+//---------------------------------------------------------------------------------------------------------------------------------------//
 
 int main() {
 
@@ -319,6 +318,8 @@ int main() {
 
     return 0;
 }
+
+//----------------------------------------------------Function Definitions---------------------------------------------------------------//
 
 char GAME_STARTUP_MENU() {
 
@@ -4117,7 +4118,7 @@ void GENERATE_ANCIENT_KEY(POINT FLOOR[38][144]) {
 
 } 
 
-void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//////////////
+void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {//////////////PAUSE MENU NOT ADDED YET.
 
     int USER_INPUT=getch();
 
@@ -4125,7 +4126,15 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {///
 
     if(USER_INPUT!=ERR && USER_INPUT!=KEY_BACKSPACE && USER_INPUT!='f' && USER_INPUT!='F') {
 
+        int CURRENT_X=GLOBAL_PLAYER_X_COORD,CURRENT_Y=GLOBAL_PLAYER_Y_COORD;
+
         PROCESS_PLAYER_INPUT(USER_INPUT,MAP, TEMP_PTR);
+
+        if(CURRENT_X!=GLOBAL_PLAYER_X_COORD || CURRENT_Y!=GLOBAL_PLAYER_Y_COORD) {
+
+            HANDLE_ITEM_PICKUPS(MAP,TEMP_PTR);
+
+        }
 
     }  
 /////////////////////////////////////////////////////////////////////////////////////////////////Experimental//////////
@@ -4160,6 +4169,8 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {///
 
                 UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);
 
+                HANDLE_ITEM_PICKUPS(MAP,TEMP_PTR);
+
                 PRINT_MAP_ON_SCREEN(MAP);
 
                 //add anything else as added in main
@@ -4169,6 +4180,15 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {///
         }
 
     }
+
+    else if(USER_INPUT=='g' || USER_INPUT=='G') {
+
+        USER_INPUT=getch();
+
+        PROCESS_PLAYER_INPUT(USER_INPUT,MAP,TEMP_PTR);
+
+    }
+    
     //no input received. loop in main will go on
 
 }
@@ -5375,7 +5395,7 @@ void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
 
     cbreak();
 
-    mvprintw(0,COLUMN/2 -11,"Input 4 Digit Passkey:");
+    mvprintw(0,COLUMN/2 -30,"Input 4 Digit Passkey. Enter 0 to Use a Key If You Have One");
 
     mvprintw(ROW/2 , COLUMN/2 -2,"####");
 
@@ -5387,7 +5407,7 @@ void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
 
     int CORRECT_PASSWORD; int DOOR_X,DOOR_Y;
 
-    for(int i=0 ; i<38 ; i++) {//reverse entering passkey and finding door x/y
+    for(int i=0 ; i<38 ; i++) {//reverse entering passkey and finding door x,y
         int BREAK=0;
         for(int j=0 ; j<144 ; j++) {
             if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='@') {
@@ -5425,7 +5445,73 @@ void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
 
     noecho(); curs_set(0);
 
-    if(INPUTTED_PASSKEY==CORRECT_PASSWORD) {
+    if(INPUTTED_PASSKEY==0) {//ancient key usage
+
+        int ANCIENT_KEY_USAGE_QUERRY=HANDLE_ANCIENT_KEY_USAGE(); //returns 1 if used successfuly. 0 if none in player inventory.
+                                                                 // -1 if key broke in the proccess. 
+        if(ANCIENT_KEY_USAGE_QUERRY==1) {
+
+            clear(); attron(GREEN_COLORED_CELL);
+
+            mvprintw(ROW/2,COLUMN/2 -22,"Key Used Successfully! Press a Key to Exit.");
+
+            attroff(GREEN_COLORED_CELL); refresh(); getch();
+
+            GLOBAL_NUMBER_OF_ANCIENT_KEYS--;
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].COLOR='g';
+
+            MAP[GLOBAL_PLAYER_FLOOR][DOOR_Y][DOOR_X].REAL_CONTENTS='+';
+
+            for(int i=0 ; i<38 ; i++) {
+
+                for(int j=0 ; j<144 ; j++) {
+
+                    if(MAP[GLOBAL_PLAYER_FLOOR][i][j].SYMBOL=='&') {
+
+                        MAP[GLOBAL_PLAYER_FLOOR][i][j].COLOR='g';
+
+                    }
+                }
+            }
+
+        }
+
+        else if(ANCIENT_KEY_USAGE_QUERRY==-1) {
+
+            GLOBAL_NUMBER_OF_ANCIENT_KEYS--; GLOBAL_NUMBER_OF_BROKEN_ANCIENT_KEYS++;
+
+            clear(); attron(GOLD_COLORED_CELL);
+
+            mvprintw(ROW/2,COLUMN/2 -21,"Oops. The Key Broke! Press a Key to Exit.");
+
+            if(GLOBAL_NUMBER_OF_BROKEN_ANCIENT_KEYS==2) {
+
+                mvprintw(ROW/2+1, COLUMN/2 -23,"You Combined 2 Broken Keys to Make a New Key!");
+
+                GLOBAL_NUMBER_OF_BROKEN_ANCIENT_KEYS-=2;
+
+                GLOBAL_NUMBER_OF_ANCIENT_KEYS++;
+
+            }
+
+            attroff(GREEN_COLORED_CELL); refresh(); getch();
+
+        }
+
+        else {
+
+            clear(); attron(ORANGE_COLORED_CELL);
+
+            mvprintw(ROW/2 ,COLUMN/2 -23,"You Don't Have Any Keys! Press a key to Exit.");
+
+            attroff(ORANGE_COLORED_CELL); refresh(); getch();
+
+        }
+
+    }
+
+    else if(INPUTTED_PASSKEY==CORRECT_PASSWORD) {
 
         GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
 
@@ -5539,5 +5625,104 @@ void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
     halfdelay(10);
 
     PRINT_MAP_ON_SCREEN(MAP);
+
+}
+
+int HANDLE_ANCIENT_KEY_USAGE() {
+
+    if(GLOBAL_NUMBER_OF_ANCIENT_KEYS>0) {
+
+        int RANDOM_TRIAL=rand()%100+1;
+
+        if(RANDOM_TRIAL<=10) {
+
+            return -1;
+
+        }
+
+        else {
+
+            return 1;
+
+        }
+
+    }
+
+    else {
+
+        return 0;
+
+    }
+
+}
+
+void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
+
+    switch(MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS) {
+
+        case 'k'://key
+
+            *TEMP_PTR='.';
+
+            MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS='.';
+
+            GLOBAL_NUMBER_OF_ANCIENT_KEYS++;
+
+            attron(GOLD_COLORED_CELL);
+
+            PRINT_MESSAGE("Picked Up an Ancient Key!");
+
+            attroff(GOLD_COLORED_CELL);
+
+            refresh();
+
+            break;
+        case '$' : //gold
+
+            *TEMP_PTR='.';
+
+            MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS='.';
+
+
+
+
+
+
+            break;
+        case '~' ://food
+
+            *TEMP_PTR='.';
+
+            MAP[GLOBAL_PLAYER_FLOOR][GLOBAL_PLAYER_Y_COORD][GLOBAL_PLAYER_X_COORD].REAL_CONTENTS='.';
+
+
+
+
+
+
+            break;
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+
 
 }
