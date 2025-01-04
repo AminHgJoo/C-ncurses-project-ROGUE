@@ -1278,7 +1278,7 @@ void PRINT_PREGAME_MENU() {
 }
 void OPEN_LEADERBOARDS() {
 
-    FILE *CREATE_FIRST=fopen("user_scores.txt","w+");
+    FILE *CREATE_FIRST=fopen("user_scores.txt","a+");
 
     fclose(CREATE_FIRST);
     
