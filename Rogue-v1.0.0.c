@@ -1276,7 +1276,11 @@ void PRINT_PREGAME_MENU() {
 
     refresh();
 }
-void OPEN_LEADERBOARDS() {///////////////////////////////////////////////////////////////////////////////
+void OPEN_LEADERBOARDS() {
+
+    FILE *CREATE_FIRST=fopen("user_scores.txt","w+");
+
+    fclose(CREATE_FIRST);
     
     FILE* SCORES_FILE=fopen("user_scores.txt","r+");
 
@@ -1436,31 +1440,7 @@ void OPEN_LEADERBOARDS() {//////////////////////////////////////////////////////
 
         }
 
-
-
-
-
-
-
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
     
     attrset(GOLD_COLORED_CELL); attroff(GOLD_COLORED_CELL);
     
