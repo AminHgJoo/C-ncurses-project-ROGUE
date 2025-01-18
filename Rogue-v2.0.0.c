@@ -1,11 +1,8 @@
-#include <stdio.h>
 #include <ncurses.h>    //403110585 Mohammad Amin Haghjoo
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <time.h>
 #include <locale.h>
-#include <math.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
 
@@ -22,7 +19,7 @@
 #define WHITE_HIGHLIGHT COLOR_PAIR(11)
 #define ORANGE_COLORED_CELL COLOR_PAIR(7)
 #define BLUE_SCREEN COLOR_PAIR(12)
-#define COLOR_ORANGE COLOR_CYAN// Cyan has been changed into Orange.
+#define COLOR_ORANGE COLOR_CYAN     // Cyan has been changed into Orange.
 
 
 
@@ -139,6 +136,8 @@ int GLOBAL_MAX_HP; //no need to save. determined based on settings.
 
 unsigned long long int GLOBAL_LAST_HUNGER_TIME_QUERRY,GLOBAL_LAST_ENCHANT_QUERRY=0;
 
+unsigned long long int GLOBAL_LAST_HP_REGEN_TIME_QUERRY=0; int GLOBAL_LAST_HP;
+
 char GLOBAL_LAST_THEME_IN=0;
 
 char GLOBAL_ALL_THEMES_COLOR[4][6]; //'w' is default. 'r' |red is nightmare. 'y' | yellow/gold is treasure. 'b'|blue is enchant room.
@@ -239,7 +238,7 @@ void SPAWN_WEAPONS(int, int ,int ,POINT [38][144]);
 
 void SPAWN_SPELLS(int , int ,int  ,POINT [38][144]);
 
-//-------------------------------------------In Game Functions(Movement & Exploration)------------------------------------------------//
+//-------------------------------------------In Game Functions(Movement & Exploration/Combat)------------------------------------------------//
 
 void HANDLE_USER_INPUT_AND_MOVE_HERO(char *,POINT [4][38][144]);
 
@@ -264,6 +263,8 @@ void HANDLE_TRAP_ACTIVATION();
 void PERFORM_ENCHANT_THEME_EFFECT_CHECK(POINT [4][38][144]);
 
 void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT [4][38][144], Mix_Music * ,Mix_Music *);
+
+void HANDLE_HP_REGEN();
 
 //--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
 
@@ -341,15 +342,19 @@ int main() {
         Mix_PlayMusic(music, 1000);
     }
     
-    unsigned long long int START_TIME=time(NULL); 
+    unsigned long long int START_TIME=time(NULL); GLOBAL_LAST_HP_REGEN_TIME_QUERRY=START_TIME;
 
     GLOBAL_LAST_HUNGER_TIME_QUERRY=START_TIME;
 
     GLOBAL_LAST_THEME_IN=GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
 
-    halfdelay(10); 
+    halfdelay(20); 
 
     char TRANSITION_STORAGE='.';    UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(MAP);    PRINT_MAP_ON_SCREEN(MAP);
+
+    GLOBAL_LAST_HP=GLOBAL_INVENTORY_AND_COORDINATES.HP;
+
+    //Game Loop Here 
 
     while(GLOBAL_EXIT_CODE==0) {
 
@@ -374,6 +379,8 @@ int main() {
         PERFORM_ENCHANT_THEME_EFFECT_CHECK(MAP);
 
         PERFORM_DEATH_CHECK();
+
+        HANDLE_HP_REGEN();
 
         GLOBAL_LAST_THEME_IN=GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
 
@@ -2598,7 +2605,7 @@ void OPEN_GAME_LAUNCHER(int * OK_LAUNCH) {
 
 
 
-void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
+void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {//////////////work needed
 
     if(GLOBAL_IS_GUEST==TRUE) {
 
@@ -4703,7 +4710,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
         OPEN_PAUSE_MENU();
 
 
-        halfdelay(10);
+        halfdelay(20);
 
     }
 
@@ -6352,7 +6359,7 @@ void OPEN_PASSKEY_GUI(POINT MAP[4][38][144]) {
 
     }
 
-    halfdelay(10);
+    halfdelay(20);
 
     PRINT_MAP_ON_SCREEN(MAP);
 
@@ -6880,7 +6887,7 @@ void FIND_MAX_HP() {
 
 }
 
-void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
+void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {////////// work needed
 
     if(GLOBAL_IS_GUEST==FALSE) {
 
@@ -7002,6 +7009,20 @@ void OPEN_DEATH_MENU() {
 
     mvprintw(ROW/2, COLUMN/2 -17 ,"You Died! Press a Key to Continue.");
 
+    mvprintw(ROW/2 +1,COLUMN/2 -8,"Your Score : %d",GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
+
+    //wipe out last save
+
+    char STRING[100]="saves_";
+
+    strcat(STRING,GLOBAL_LOGGED_IN_USER);
+
+    strcat(STRING,".txt");
+
+    FILE *SAVE_LOCATION=fopen(STRING,"w+");
+
+    fclose(SAVE_LOCATION);
+
     refresh();  attroff(RED_COLORED_CELL); getch();
 
 }
@@ -7117,11 +7138,11 @@ void OPEN_FOOD_MENU() {
 
     }
 
-    halfdelay(10); 
+    halfdelay(20); 
 
 }
 
-void HANDLE_TRAP_ACTIVATION() {//will change in phase 2
+void HANDLE_TRAP_ACTIVATION() {
 
     GLOBAL_INVENTORY_AND_COORDINATES.HP-=5;
 
@@ -7145,7 +7166,7 @@ void OPEN_WEAPONS_MENU() {
 
     attroff(GOLD_COLORED_CELL); refresh(); getch();
 
-    halfdelay(10);
+    halfdelay(20);
 
 }
 
@@ -7163,7 +7184,7 @@ void OPEN_SPELLS_MENU() {
 
     attroff(GOLD_COLORED_CELL); refresh(); getch();
 
-    halfdelay(10);
+    halfdelay(20);
 
 }
 
@@ -7520,7 +7541,7 @@ void PERFORM_ENCHANT_THEME_EFFECT_CHECK(POINT MAP[4][38][144]) {
 
 }
 
-void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT MAP[4][38][144], Mix_Music * music,Mix_Music * THEME_MUSIC) {
+void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT MAP[4][38][144], Mix_Music * music, Mix_Music * THEME_MUSIC) {
 
     if(GLOBAL_SETTINGS.PLAY_MUSIC=='t') {
 
@@ -7586,5 +7607,50 @@ void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT MAP[4][38][144], Mix_Music * music,M
     }
 
 }
+
+void HANDLE_HP_REGEN() {
+
+    unsigned long long TIME_NOW=time(NULL);
+
+    if(TIME_NOW-GLOBAL_LAST_HP_REGEN_TIME_QUERRY>=5) {
+
+        GLOBAL_LAST_HP_REGEN_TIME_QUERRY=TIME_NOW;
+
+        if(GLOBAL_LAST_HP<=GLOBAL_INVENTORY_AND_COORDINATES.HP 
+        
+        && GLOBAL_INVENTORY_AND_COORDINATES.HP <GLOBAL_MAX_HP 
+        
+        && GLOBAL_INVENTORY_AND_COORDINATES.HUNGER>0) {
+
+            GLOBAL_INVENTORY_AND_COORDINATES.HP+=2;
+
+            if(GLOBAL_INVENTORY_AND_COORDINATES.HP>GLOBAL_MAX_HP) {
+                GLOBAL_INVENTORY_AND_COORDINATES.HP=GLOBAL_MAX_HP;
+            }
+
+        }   
+
+        GLOBAL_LAST_HP=GLOBAL_INVENTORY_AND_COORDINATES.HP;
+
+    }
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 //------------------------------------------------------------End----------------------------------------------------------------------//
