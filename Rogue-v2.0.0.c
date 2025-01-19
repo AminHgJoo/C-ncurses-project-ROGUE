@@ -1,4 +1,4 @@
-#include <ncurses.h>    //403110585 Mohammad Amin Haghjoo
+#include <ncurses.h>    //SUT Student ID:403110585 | Mohammad Amin Haghjoo []~(￣▽￣)~*
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -94,7 +94,7 @@ typedef struct inventory_and_stats {//this struct must be saved
 
     int TIME_PLAYED;
 
-
+    char EQUIPPED_WEAPON;//s : sword | m : mace | w : wand | a : arrows | d : dagger | value of 0, Nothing
 
 } INVENTORY_AND_STATS;
 
@@ -200,6 +200,7 @@ void OPEN_VICTORY_MENU();
 void SAVE_ONTO_SCOREBOARD(int );
 void OPEN_GAME_LAUNCHER(int *);
 void HANDLE_EFFECTS_USAGE();
+void PRINT_WEAPONS_MENU();
 
 //-----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
 
@@ -6251,11 +6252,34 @@ void PRINT_MAP_ON_SCREEN(POINT MAP[4][38][144]) {
 
     mvprintw(ROW-1,0,"Floor : %d |",GLOBAL_INVENTORY_AND_COORDINATES.FLOOR+1);
 
-    mvprintw(ROW-1,13,"HP : %d/%d | Saturation : %d/100 | Gold : %d | Score : %d"
+    char STRING[20];
+
+    switch(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON) {
+        case 'm' : 
+            strcpy(STRING,"Mace");
+            break;
+        case 'w' :
+            strcpy(STRING,"Magic Wand");
+            break;
+        case 'a' : 
+            strcpy(STRING,"Arrows");
+            break;
+        case 's' : 
+            strcpy(STRING,"Sword");
+            break;
+        case 'd' :
+            strcpy(STRING,"Daggers");
+            break;
+        case 0 :
+            strcpy(STRING,"Unequipped");
+            break;
+    }
+
+    mvprintw(ROW-1,13,"HP : %d/%d | Saturation : %d/100 | Gold : %d | Score : %d | Equipped Weapon : %s" 
     
     ,GLOBAL_INVENTORY_AND_COORDINATES.HP,GLOBAL_MAX_HP,GLOBAL_INVENTORY_AND_COORDINATES.HUNGER
     
-    ,GLOBAL_INVENTORY_AND_COORDINATES.GOLD,GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
+    ,GLOBAL_INVENTORY_AND_COORDINATES.GOLD,GLOBAL_INVENTORY_AND_COORDINATES.SCORE,STRING);
 
     move(0,0);
 
@@ -7057,7 +7081,6 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
 
             break;
         }
-        
         case -3 : {//sword
 
             if(GLOBAL_INVENTORY_AND_COORDINATES.SWORD==0) {
@@ -7296,8 +7319,7 @@ void START_GAME(int* OK_LAUNCH) {
 
     GLOBAL_INVENTORY_AND_COORDINATES.SWORD=0; GLOBAL_INVENTORY_AND_COORDINATES.WAND=0; GLOBAL_INVENTORY_AND_COORDINATES.TIME_PLAYED=0;
 
-    GLOBAL_EFFECTS_STORAGE.D=0; GLOBAL_EFFECTS_STORAGE.H=0; GLOBAL_EFFECTS_STORAGE.S=0;
-
+    GLOBAL_EFFECTS_STORAGE.D=0; GLOBAL_EFFECTS_STORAGE.H=0; GLOBAL_EFFECTS_STORAGE.S=0; GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='m';
 
     setlocale(LC_ALL, "");  srand(time(NULL)); 
 
@@ -7627,23 +7649,170 @@ void HANDLE_TRAP_ACTIVATION() {
 
 }
 
-void OPEN_WEAPONS_MENU() {
+void PRINT_WEAPONS_MENU() {
+    char STRING[20];
 
-    clear(); cbreak(); attron(GOLD_COLORED_CELL);
+    switch(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON) {
+        case 'm' : 
+            strcpy(STRING,"Mace");
+            break;
+        case 'w' :
+            strcpy(STRING,"Magic Wand");
+            break;
+        case 'a' : 
+            strcpy(STRING,"Arrows");
+            break;
+        case 's' : 
+            strcpy(STRING,"Sword");
+            break;
+        case 'd' :
+            strcpy(STRING,"Daggers");
+            break;
+        case 0 : 
+            strcpy(STRING,"Unequipped");
+            break;
+    }
 
-    mvprintw(0,COLUMN/2 - 12,"Press a Key to Exit.");
+    mvprintw(0,COLUMN/2 -20,"Weapons Inventory | Current Weapon is : %s",STRING);
+    mvprintw(1,COLUMN/2 -48, "Press w to Unequip Your Current Weapon. Press The Appropriate Key to Equip a Weapon Afterwards.");
+    mvprintw(ROW/5 ,  40,"Key   Melee   Amount  DMG     Key  Ranged   Amonut   DMG  Range");
+    mvprintw(2*ROW/5 ,40," m    Mace       1     5       d   Dagger     %d     12     5",GLOBAL_INVENTORY_AND_COORDINATES.DAGGER);
+    mvprintw(3*ROW/5, 40," s    Sword      %d     10      g   Wand      %d     15     10",GLOBAL_INVENTORY_AND_COORDINATES.SWORD,GLOBAL_INVENTORY_AND_COORDINATES.WAND);
+    mvprintw(4*ROW/5, 40,"                               a   Arrow      %d     5      5",GLOBAL_INVENTORY_AND_COORDINATES.ARROW);
+}
 
-    mvprintw(ROW/2,0,"Daggers :%d",GLOBAL_INVENTORY_AND_COORDINATES.DAGGER);
 
-    mvprintw(ROW/2+1,0,"Maces :%d",GLOBAL_INVENTORY_AND_COORDINATES.MACE);
+void OPEN_WEAPONS_MENU() {//////////////////////////complete rewamp
 
-    mvprintw(ROW/2+2,0,"Swords :%d",GLOBAL_INVENTORY_AND_COORDINATES.SWORD);
+    cbreak(); attron(GOLD_COLORED_CELL);
 
-    mvprintw(ROW/2+3,0,"Magic Wands :%d",GLOBAL_INVENTORY_AND_COORDINATES.WAND);
+    int INPUT; int BREAK=0;
+    
+    while(TRUE) {
 
-    mvprintw(ROW/2+4,0,"Normal Arrows:%d",GLOBAL_INVENTORY_AND_COORDINATES.ARROW);
+        clear();
 
-    attroff(GOLD_COLORED_CELL); refresh(); getch();
+        PRINT_WEAPONS_MENU();
+
+        INPUT=getch();
+
+        switch(INPUT) {
+
+            case 'w' :
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON!=0) {
+                    GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=0;
+                }
+
+                break;
+            case 'm' :
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON==0) {
+                    mvprintw(2,COLUMN/2 -23,"Equipped Weapon Changed. Press a Key to Exit.");
+                    GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='m';
+                    getch();
+                    BREAK++;
+                }
+                else {
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -37,"a Weapon is Already Equipped. Unequip that first. Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                break;
+            case 's' :
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON==0 && GLOBAL_INVENTORY_AND_COORDINATES.SWORD>0) {
+                    mvprintw(2,COLUMN/2 -23,"Equipped Weapon Changed. Press a Key to Exit.");
+                    GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='s';
+                    getch();
+                    BREAK++;
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON!=0){
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -37,"a Weapon is Already Equipped. Unequip that first. Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                else {
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -30, "You Don't Have Any Of This Weapon! Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                break;
+            case 'd' :
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON==0 && GLOBAL_INVENTORY_AND_COORDINATES.DAGGER>0) {
+                    mvprintw(2,COLUMN/2 -23,"Equipped Weapon Changed. Press a Key to Exit.");
+                    GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='d';
+                    getch();
+                    BREAK++;
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON!=0){
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -37,"a Weapon is Already Equipped. Unequip that first. Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                else {
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -30, "You Don't Have Any Of This Weapon! Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                break;
+            case 'a' :
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON==0 && GLOBAL_INVENTORY_AND_COORDINATES.ARROW>0) {
+                    mvprintw(2,COLUMN/2 -23,"Equipped Weapon Changed. Press a Key to Exit.");
+                    GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='a';
+                    getch();
+                    BREAK++;
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON!=0){
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -37,"a Weapon is Already Equipped. Unequip that first. Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                else {
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -30, "You Don't Have Any Of This Weapon! Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                break;
+            case 'g' :
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON==0 && GLOBAL_INVENTORY_AND_COORDINATES.WAND>0) {
+                    mvprintw(2,COLUMN/2 -23,"Equipped Weapon Changed. Press a Key to Exit.");
+                    GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='w';
+                    getch();
+                    BREAK++;
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON!=0){
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -37,"a Weapon is Already Equipped. Unequip that first. Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                else {
+                    attrset(RED_COLORED_CELL);
+                    mvprintw(2,COLUMN/2 -30, "You Don't Have Any Of This Weapon! Press a Key to Continue.");
+                    attrset(GOLD_COLORED_CELL);
+                    getch();
+                }
+                break;
+            default :
+                attrset(RED_COLORED_CELL);
+                mvprintw(2,COLUMN/2 -23,"Invalid Key Pressed. Press a Key to Continue.");
+                attrset(GOLD_COLORED_CELL);
+                getch();
+                break;
+        }
+
+        if(BREAK){
+            break;
+        }
+
+    }
+
+    attroff(GOLD_COLORED_CELL); refresh(); 
 
     halfdelay(20);
 
