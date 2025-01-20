@@ -86,7 +86,9 @@ typedef struct inventory_and_stats {//this struct must be saved
 
     int BROKEN_KEYS;
 
-    int HUNGER; int HP; int SCORE; int GOLD; int FOOD_ITEMS;//all 0 at start except HP/HUNGER
+    int HUNGER; int HP; int SCORE; int GOLD; //all 0 at start except HP/HUNGER
+    
+    int FOOD_REGULAR, FOOD_ELITE,FOOD_MAGIC,FOOD_SPOILED;
 
     int H_SPELL,S_SPELL,D_SPELL; //all 0 at start
 
@@ -143,6 +145,8 @@ int GLOBAL_MAX_HP; //no need to save. determined based on settings.
 unsigned long long int GLOBAL_LAST_HUNGER_TIME_QUERRY,GLOBAL_LAST_ENCHANT_QUERRY=0;
 
 unsigned long long int GLOBAL_LAST_HP_REGEN_TIME_QUERRY=0; int GLOBAL_LAST_HP;
+
+unsigned long long int GLOBAL_LAST_SPOILAGE_TIME_QUERRY=0;
 
 char GLOBAL_LAST_THEME_IN=0;
 
@@ -201,98 +205,54 @@ void SAVE_ONTO_SCOREBOARD(int );
 void OPEN_GAME_LAUNCHER(int *);
 void HANDLE_EFFECTS_USAGE();
 void PRINT_WEAPONS_MENU();
-
-//-----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
-
+//----------------------------------------------------In Game Functions(World Gen)----------------------------------------------------//
 void PRINT_MESSAGE(char []);
-
 void CLEAR_MESSAGE_BAR();
-
 void TURN_OFF_COLOR_FOR_MAP_PRINT(char);
-
 void TURN_ON_COLOR_FOR_MAP_PRINT(char);
-
 int GIVE_SECTOR_NUMBER(int , int );
-
 void LOAD_MAP_AND_INVENTORY(POINT [4][38][144]);
-
 void GENERATE_MAP(POINT [4][38][144]);
-
 int GENERATE_FLOOR_SKELETON(POINT [38][144], int ,int );
-
 void CONNECT_ROOMS_AND_RETURN_DOORS(POINT [38][144], DOOR [14]);
-
 void GENERATE_PILLARS(POINT [38][144]);
-
 int GENERATE_ENTRY_EXIT( POINT [38][144], int );
-
 COORDS GIVE_STAIRS_ADDRESS_ENTRY(POINT [38][144]);
-
 COORDS GIVE_STAIRS_ADDRESS_EXIT(POINT [38][144]);
-
 int FIND_SPECIFIED_DOOR(char ,  int , DOOR [14]);
-
 void GENERATE_ANCIENT_KEY(POINT [38][144]);   
-
 void SPAWN_FOOD(int , int , int ,POINT [38][144]);
-
 void SPAWN_BLACK_GOLD(int , int , int ,POINT [38][144]);
-
 void SPAWN_GOLD(int , int , int , POINT [38][144]);
-
 void SPAWN_TRAPS(int, int , int , POINT [38][144]);
-
 void SPAWN_WEAPONS(int, int ,int ,POINT [38][144]);
-
 void SPAWN_SPELLS(int , int ,int  ,POINT [38][144]);
-
 //-------------------------------------------In Game Functions(Movement & Exploration/Combat)------------------------------------------------//
-
 void HANDLE_USER_INPUT_AND_MOVE_HERO(char *,POINT [4][38][144]);
-
 int PROCESS_PLAYER_INPUT(int, POINT [4][38][144], char *);
-
 void PRINT_MAP_ON_SCREEN(POINT [4][38][144]);
-
 void UPDATE_EXPLORATION_AND_HANDLE_INTERACTIVE_OBJECTS(POINT [4][38][144]);
-
 void REVEAL_ENTIRE_SECTOR(POINT [4][38][144],int );
-
 void REVEAL_HALLWAYS(POINT [4][38][144], char,int ,int ,int );
-
 void FIND_MAX_HP();
-
 void PERFORM_DEATH_CHECK();
-
 void OPEN_DEATH_MENU();
-
 void HANDLE_TRAP_ACTIVATION();
-
 void PERFORM_ENCHANT_THEME_EFFECT_CHECK(POINT [4][38][144]);
-
 void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT [4][38][144], Mix_Music * ,Mix_Music *);
-
 void HANDLE_HP_REGEN();
-
 //--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
-
 void PASSWORD_BACKGROUND_CHECK();
-
 void HANDLE_DOOR_PASSKEY_GENERATION(POINT [4][38][144]);
-
 void OPEN_PASSKEY_GUI(POINT [4][38][144]);
-
 int HANDLE_ANCIENT_KEY_USAGE();
-
 //-------------------------------------------------Item Pickups Handling------------------------------------------------------------------//
-
 void HANDLE_ITEM_PICKUPS(POINT [4][38][144], char *);
-
 void REDUCE_HUNGER();
-
+void HANDLE_FOOD_SPOILAGE();
 //-------------------------------------------------------------Main-----------------------------------------------------------------------//
 
-int main() {
+int main() {/////////////////////////////////////////////////////////////////////////////////
 
     int OK_SCREEN_SIZE=TRUE;
 
@@ -350,7 +310,7 @@ int main() {
         Mix_PlayMusic(music, 1000);
     }
     
-    unsigned long long int START_TIME=time(NULL); GLOBAL_LAST_HP_REGEN_TIME_QUERRY=START_TIME;
+    unsigned long long int START_TIME=time(NULL); GLOBAL_LAST_HP_REGEN_TIME_QUERRY=START_TIME; GLOBAL_LAST_SPOILAGE_TIME_QUERRY=START_TIME;
 
     GLOBAL_LAST_HUNGER_TIME_QUERRY=START_TIME;
 
@@ -391,6 +351,8 @@ int main() {
         HANDLE_HP_REGEN();
 
         HANDLE_EFFECTS_USAGE();
+
+        HANDLE_FOOD_SPOILAGE();
 
         GLOBAL_LAST_THEME_IN=GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
 
@@ -2692,7 +2654,7 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {//////////////work needed
 
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
 
-            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS);
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR);
             
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.HP);
 
@@ -6949,7 +6911,11 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
         }
         case '~' : {//food
 
-            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS<5) {
+            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR+GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE
+            
+            +GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC+GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED<5) {
+
+                char COLOR_OF_FOOD=MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].COLOR;
                 
                 *TEMP_PTR='.';
 
@@ -6963,11 +6929,28 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
                 
                 GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
 
-                strcpy(GLOBAL_MOST_RECENT_MESSAGE,"Picked Up 1 Ration.");
+                if(COLOR_OF_FOOD=='r') {
+                    strcpy(GLOBAL_MOST_RECENT_MESSAGE,"Picked Up 1 Regular Ration.");
 
-                PRINT_MESSAGE("Picked Up 1 Ration.");
+                    PRINT_MESSAGE("Picked Up 1 Regular Ration.");
 
-                GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS++;
+                    GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR++;
+                }
+                if(COLOR_OF_FOOD=='y') {
+                    strcpy(GLOBAL_MOST_RECENT_MESSAGE,"Picked Up 1 Elite Ration.");
+
+                    PRINT_MESSAGE("Picked Up 1 Elite Ration.");
+
+                    GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE++;
+
+                }
+                if(COLOR_OF_FOOD=='b') {
+                    strcpy(GLOBAL_MOST_RECENT_MESSAGE,"Picked Up 1 Magical Ration.");
+
+                    PRINT_MESSAGE("Picked Up 1 Magical Ration.");
+
+                    GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC++;
+                }
 
             }
 
@@ -7311,7 +7294,9 @@ void START_GAME(int* OK_LAUNCH) {
 
     GLOBAL_INVENTORY_AND_COORDINATES.H_SPELL=0; GLOBAL_INVENTORY_AND_COORDINATES.D_SPELL=0 ; GLOBAL_INVENTORY_AND_COORDINATES.S_SPELL=0;
 
-    GLOBAL_INVENTORY_AND_COORDINATES.SCORE=0; GLOBAL_INVENTORY_AND_COORDINATES.GOLD=0; GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS=0;
+    GLOBAL_INVENTORY_AND_COORDINATES.SCORE=0; GLOBAL_INVENTORY_AND_COORDINATES.GOLD=0; GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR=0;
+
+    GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE=0; GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC=0; GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED=0;
 
     GLOBAL_INVENTORY_AND_COORDINATES.HUNGER=100; GLOBAL_INVENTORY_AND_COORDINATES.HP=0;
 
@@ -7434,7 +7419,7 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {////////// work needed
 
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
 
-        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS);
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR);
 
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.HP);
 
@@ -7564,7 +7549,7 @@ void REDUCE_HUNGER() {
 
 }
 
-void OPEN_FOOD_MENU() {
+void OPEN_FOOD_MENU() {////////////////////////////////////////////////////////////////////////////////////CHANGE HERE
 
     cbreak(); 
 
@@ -7592,7 +7577,7 @@ void OPEN_FOOD_MENU() {
 
         mvprintw(4,COLUMN/2 -26 ,"Select a Food Item to Use. Press Backspace to Exit."); attroff(GOLD_COLORED_CELL);
 
-        attron(GOLD_HIGHLIGHT | A_BLINK);    mvprintw(ROW/2,COLUMN/2 - 9,"Regular Rations :%d",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS); 
+        attron(GOLD_HIGHLIGHT | A_BLINK);    mvprintw(ROW/2,COLUMN/2 - 9,"Regular Rations :%d",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR); 
         
         attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
 
@@ -7605,9 +7590,9 @@ void OPEN_FOOD_MENU() {
 
         if(INPUT=='e' || INPUT=='E') {
 
-            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS>0) {
+            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR>0) {
 
-                GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ITEMS--;
+                GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR--;
 
                 GLOBAL_INVENTORY_AND_COORDINATES.HP+=20;
 
@@ -7682,7 +7667,7 @@ void PRINT_WEAPONS_MENU() {
 }
 
 
-void OPEN_WEAPONS_MENU() {//////////////////////////complete rewamp
+void OPEN_WEAPONS_MENU() {
 
     cbreak(); attron(GOLD_COLORED_CELL);
 
@@ -7991,8 +7976,18 @@ void SPAWN_FOOD(int MAX_NUMBER, int CHANCE,int SECTOR ,POINT FLOOR[38][144]) {
                 RANDOM=rand()%100+1;
 
                 if(RANDOM<=CHANCE) {
+
+                    RANDOM=rand()%3; //determine food type. gold/ regular / magical.
                     
-                    FLOOR[i][j].COLOR='r';
+                    if(RANDOM==0) {//regular
+                        FLOOR[i][j].COLOR='r';
+                    }
+                    else if(RANDOM==1) {//gold
+                        FLOOR[i][j].COLOR='y';
+                    }
+                    else {
+                        FLOOR[i][j].COLOR='b';
+                    }
 
                     FLOOR[i][j].REAL_CONTENTS='~';
 
@@ -8364,7 +8359,33 @@ void HANDLE_EFFECTS_USAGE() {
 
 }
 
+void HANDLE_FOOD_SPOILAGE() {
 
+    unsigned long long int TIME_QUERRY=time(NULL);
+
+    if(TIME_QUERRY-GLOBAL_LAST_SPOILAGE_TIME_QUERRY>=120) {
+
+        GLOBAL_LAST_SPOILAGE_TIME_QUERRY=TIME_QUERRY;
+
+        if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR>0) {
+            GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED+=GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR;
+            GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR=0;
+        }
+        if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC>0) {
+            GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR+=GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC;
+            GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC=0;
+        }
+        if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE>0) {
+            GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR+=GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE;
+            GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE=0;
+        }
+
+
+
+    }
+
+
+}
 
 
 
