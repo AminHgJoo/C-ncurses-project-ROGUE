@@ -96,7 +96,7 @@ typedef struct inventory_and_stats {//this struct must be saved
 
     int TIME_PLAYED;
 
-    char EQUIPPED_WEAPON;//s : sword | m : mace | w : wand | a : arrows | d : dagger | value of 0, Nothing
+    int EQUIPPED_WEAPON;//s : sword | m : mace | w : wand | a : arrows | d : dagger | value of 0, Nothing
 
 } INVENTORY_AND_STATS;
 
@@ -2653,9 +2653,23 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {//////////////work needed
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.GOLD);
 
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
-
+/////////////////////////////////////////////////////////////////////////////////////////////
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR);
-            
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED);
+
+            fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON);
+
+            fscanf(SAVES,"%d",&GLOBAL_EFFECTS_STORAGE.D);
+
+            fscanf(SAVES,"%d",&GLOBAL_EFFECTS_STORAGE.H);
+
+            fscanf(SAVES,"%d",&GLOBAL_EFFECTS_STORAGE.S);
+///////////////////////////////////////////////////////////////////////////////////////////
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.HP);
 
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.HUNGER);
@@ -7418,9 +7432,23 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {////////// work needed
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.GOLD);
 
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
-
+////////////////////////////////////////////////////////////////////////////////////////////
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR);
 
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_EFFECTS_STORAGE.D);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_EFFECTS_STORAGE.H);
+
+        fprintf(SAVE_LOCATION,"%d ",GLOBAL_EFFECTS_STORAGE.S);
+////////////////////////////////////////////////////////////////////////////////////////////////
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.HP);
 
         fprintf(SAVE_LOCATION,"%d ",GLOBAL_INVENTORY_AND_COORDINATES.HUNGER);
@@ -7549,7 +7577,7 @@ void REDUCE_HUNGER() {
 
 }
 
-void OPEN_FOOD_MENU() {////////////////////////////////////////////////////////////////////////////////////CHANGE HERE
+void OPEN_FOOD_MENU() {
 
     cbreak(); 
 
@@ -7575,11 +7603,15 @@ void OPEN_FOOD_MENU() {/////////////////////////////////////////////////////////
 
         mvprintw(2,24,"| ");
 
-        mvprintw(4,COLUMN/2 -26 ,"Select a Food Item to Use. Press Backspace to Exit."); attroff(GOLD_COLORED_CELL);
+        mvprintw(4,COLUMN/2 -30 ,"Select a Food Item to Use(r, m, e). Press Backspace to Exit."); attroff(GOLD_COLORED_CELL);
 
-        attron(GOLD_HIGHLIGHT | A_BLINK);    mvprintw(ROW/2,COLUMN/2 - 9,"Regular Rations :%d",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR); 
+        attron(GOLD_COLORED_CELL);   
         
-        attroff(GOLD_HIGHLIGHT); attroff(A_BLINK);
+        mvprintw(ROW/4,COLUMN/2 - 10,"Regular Rations :%d",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR+GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED);
+        mvprintw(ROW/2, COLUMN/2 - 10,"Magical Rations :%d",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC);
+        mvprintw(3*ROW/4 , COLUMN/2 -9,"Elite Rations :%d",GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE); 
+        
+        attroff(GOLD_COLORED_CELL);
 
         int INPUT=getch();
 
@@ -7590,11 +7622,11 @@ void OPEN_FOOD_MENU() {/////////////////////////////////////////////////////////
 
         if(INPUT=='e' || INPUT=='E') {
 
-            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR>0) {
+            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE>0) {
 
-                GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR--;
+                GLOBAL_INVENTORY_AND_COORDINATES.FOOD_ELITE--;
 
-                GLOBAL_INVENTORY_AND_COORDINATES.HP+=20;
+                GLOBAL_INVENTORY_AND_COORDINATES.HP+=40;
 
                 if(GLOBAL_INVENTORY_AND_COORDINATES.HP>GLOBAL_MAX_HP) {
 
@@ -7602,13 +7634,15 @@ void OPEN_FOOD_MENU() {/////////////////////////////////////////////////////////
 
                 }
 
-                GLOBAL_INVENTORY_AND_COORDINATES.HUNGER+=30;
+                GLOBAL_INVENTORY_AND_COORDINATES.HUNGER+=50;
 
                 if(GLOBAL_INVENTORY_AND_COORDINATES.HUNGER>100) {
 
                     GLOBAL_INVENTORY_AND_COORDINATES.HUNGER=100;
 
                 }
+
+                GLOBAL_EFFECTS_STORAGE.D=10;
 
             }
 
@@ -7621,7 +7655,112 @@ void OPEN_FOOD_MENU() {/////////////////////////////////////////////////////////
             }
         }
 
+        else if(INPUT=='r' || INPUT=='R') {
+            
+            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR+GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED>0) {
 
+                if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED==0) {
+                    GLOBAL_INVENTORY_AND_COORDINATES.HP+=20;
+                    GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR--;
+
+                    if(GLOBAL_INVENTORY_AND_COORDINATES.HP>GLOBAL_MAX_HP) {
+
+                        GLOBAL_INVENTORY_AND_COORDINATES.HP=GLOBAL_MAX_HP;
+
+                    }
+
+                    GLOBAL_INVENTORY_AND_COORDINATES.HUNGER+=25;
+
+                    if(GLOBAL_INVENTORY_AND_COORDINATES.HUNGER>100) {
+
+                        GLOBAL_INVENTORY_AND_COORDINATES.HUNGER=100;
+
+                    }
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR==0) {
+                    
+                    GLOBAL_INVENTORY_AND_COORDINATES.HP-=10;
+
+                    GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED--;
+
+                }
+                else {
+
+                    int TOTAL_FOOD=GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR+GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED;
+                    int RANDOM=rand()%TOTAL_FOOD+1;
+                    if(RANDOM<=GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED) {
+                        GLOBAL_INVENTORY_AND_COORDINATES.HP-=10;
+
+                        GLOBAL_INVENTORY_AND_COORDINATES.FOOD_SPOILED--;
+                    }
+                    else {
+                        GLOBAL_INVENTORY_AND_COORDINATES.HP+=20;
+                        GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR--;
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.HP>GLOBAL_MAX_HP) {
+
+                            GLOBAL_INVENTORY_AND_COORDINATES.HP=GLOBAL_MAX_HP;
+
+                        }
+
+                        GLOBAL_INVENTORY_AND_COORDINATES.HUNGER+=25;
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.HUNGER>100) {
+
+                            GLOBAL_INVENTORY_AND_COORDINATES.HUNGER=100;
+
+                        }
+
+                    }
+
+                }
+            
+            }
+
+            else {
+
+                clear(); attron(RED_COLORED_CELL); mvprintw(ROW/2,COLUMN/2 -23,"You Have Nothing to Eat! Press a Key to Exit.");
+
+                attroff(RED_COLORED_CELL); getch();
+
+            }
+        }
+        else if(INPUT=='m' || INPUT=='M') {
+
+            if(GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC>0) {
+
+                GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC--;
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP+=40;
+
+                if(GLOBAL_INVENTORY_AND_COORDINATES.HP>GLOBAL_MAX_HP) {
+
+                    GLOBAL_INVENTORY_AND_COORDINATES.HP=GLOBAL_MAX_HP;
+
+                }
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HUNGER+=50;
+
+                if(GLOBAL_INVENTORY_AND_COORDINATES.HUNGER>100) {
+
+                    GLOBAL_INVENTORY_AND_COORDINATES.HUNGER=100;
+
+                }
+
+                GLOBAL_EFFECTS_STORAGE.S=10;
+
+            }
+
+            else {
+
+                clear(); attron(RED_COLORED_CELL); mvprintw(ROW/2,COLUMN/2 -23,"You Have Nothing to Eat! Press a Key to Exit.");
+
+                attroff(RED_COLORED_CELL); getch();
+
+            }
+
+
+        }
     }
 
     halfdelay(20); 
@@ -7782,6 +7921,9 @@ void OPEN_WEAPONS_MENU() {
                     attrset(GOLD_COLORED_CELL);
                     getch();
                 }
+                break;
+            case KEY_BACKSPACE :
+                BREAK++;
                 break;
             default :
                 attrset(RED_COLORED_CELL);
