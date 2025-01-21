@@ -1,11 +1,10 @@
-#include <ncurses.h>    //SUT Student ID:403110585 | Mohammad Amin Haghjoo []~(￣▽￣)~*
+#include <ncurses.h>    //\\ SUT Student ID:403110585 | <<Mohammad Amin Haghjoo>> []~(￣▽￣)~* \\// 
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
 #include <locale.h>
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_mixer.h>
-
 
 #define RED_COLORED_CELL COLOR_PAIR(3)
 #define GREEN_COLORED_CELL COLOR_PAIR(4)
@@ -20,10 +19,6 @@
 #define ORANGE_COLORED_CELL COLOR_PAIR(7)
 #define BLUE_SCREEN COLOR_PAIR(12)
 #define COLOR_ORANGE COLOR_CYAN     // Cyan has been changed into Orange.
-
-
-
-
 
 typedef struct point {
 
@@ -135,9 +130,6 @@ typedef struct {
     int SYMBOL;
 
 }   ENEMY;
-
-
-
 
 //----------------------------------------------Player Inventory/misc Handling-------------------------------------------------//
 
@@ -369,6 +361,10 @@ int main() {////////////////////////////////////////////////////////////////////
 
         PERFORM_ENCHANT_THEME_EFFECT_CHECK(MAP);
 
+
+
+
+
         PERFORM_DEATH_CHECK();
 
         HANDLE_HP_REGEN();
@@ -376,6 +372,8 @@ int main() {////////////////////////////////////////////////////////////////////
         HANDLE_EFFECTS_USAGE();
 
         HANDLE_FOOD_SPOILAGE();
+
+        MOVE_ENEMIES(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR]);
 
         GLOBAL_LAST_THEME_IN=GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
 
@@ -4763,6 +4761,8 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
                 PRINT_MAP_ON_SCREEN(MAP);
 
+                MOVE_ENEMIES(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR]);
+
                 //add anything else as added in main
 
             } while(CURRENT_X!=GLOBAL_INVENTORY_AND_COORDINATES.x || CURRENT_Y!= GLOBAL_INVENTORY_AND_COORDINATES.y);
@@ -4783,7 +4783,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
 }
 
-int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {
+int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {///////////////////////////////////////////////////////////
 
     switch(USER_INPUT) //inventory and other stuff will be implemented later.
     //movement with numpad added
@@ -5755,6 +5755,9 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
             break;
         }
+
+        //add attack buttons
+        
 
     }
 
@@ -7212,7 +7215,7 @@ int HANDLE_ANCIENT_KEY_USAGE() {
 
 }
 
-void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
+void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {///////////////////////////////////////////////////////////
     //change picked up items' color to theme default
     switch(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS) {
 
@@ -7555,6 +7558,13 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
 
             break;
         }
+    
+        //add throwables' fragments here.
+    
+    
+    
+    
+    
     }
 
 }
@@ -8171,7 +8181,6 @@ void PRINT_WEAPONS_MENU() {
     mvprintw(3*ROW/5, 40," s    Sword      %d     10      g   Wand      %d     15     10",GLOBAL_INVENTORY_AND_COORDINATES.SWORD,GLOBAL_INVENTORY_AND_COORDINATES.WAND);
     mvprintw(4*ROW/5, 40,"                               a   Arrow      %d     5      5",GLOBAL_INVENTORY_AND_COORDINATES.ARROW);
 }
-
 
 void OPEN_WEAPONS_MENU() {
 
@@ -9007,9 +9016,91 @@ void GENERATE_ENEMIES(POINT FLOOR[38][144], int FLOOR_NUMBER) {
 
 void MOVE_ENEMIES(POINT FLOOR[38][144]) {/////////////////////////////////////////////////
 
+    int SECTOR=GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1;
+
+    if(FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS!='#' 
+    
+    && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP>0 && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT!=0) {
+
+        int MOVE_SUCCESS=FALSE;
+
+        int past_x=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x;
+        
+        int past_y=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y;
+
+        if(GLOBAL_INVENTORY_AND_COORDINATES.x-GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x>0 
+        
+        && FLOOR[past_y][past_x+1].REAL_CONTENTS=='.' && FLOOR[past_y][past_x+1].SYMBOL=='.') {
+
+            FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x++;
+
+            FLOOR[past_y][past_x+1].SYMBOL=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL; 
+            
+            FLOOR[past_y][past_x+1].REAL_CONTENTS=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL;
+
+            MOVE_SUCCESS++;
+        }
+        else if(GLOBAL_INVENTORY_AND_COORDINATES.x-GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x<0 
+        
+        && FLOOR[past_y][past_x-1].REAL_CONTENTS=='.' && FLOOR[past_y][past_x-1].SYMBOL=='.') {
+            
+            FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x--;
+
+            FLOOR[past_y][past_x-1].SYMBOL=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL; 
+            
+            FLOOR[past_y][past_x-1].REAL_CONTENTS=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL;
+
+            MOVE_SUCCESS++;
+        }
+        else if(GLOBAL_INVENTORY_AND_COORDINATES.y-GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y>0
+        
+        && FLOOR[past_y+1][past_x].REAL_CONTENTS=='.' && FLOOR[past_y+1][past_x].SYMBOL=='.') {
+
+            FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y++;
+
+            FLOOR[past_y+1][past_x].SYMBOL=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL; 
+            
+            FLOOR[past_y+1][past_x].REAL_CONTENTS=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL;
+            
+            MOVE_SUCCESS++;
+        }
+        else if(GLOBAL_INVENTORY_AND_COORDINATES.y-GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y<0
+        
+        && FLOOR[past_y-1][past_x].REAL_CONTENTS=='.' && FLOOR[past_y-1][past_x].SYMBOL=='.') {
+
+            FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y--;
+
+            FLOOR[past_y-1][past_x].SYMBOL=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL; 
+            
+            FLOOR[past_y-1][past_x].REAL_CONTENTS=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].SYMBOL;
+
+            MOVE_SUCCESS++;
+        }
 
 
 
+
+        if(MOVE_SUCCESS && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MAX_MOVE_TILES>0) {
+
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT--;
+        
+        }
+
+
+
+    }
+
+    if(FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS=='+') {
+        GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MAX_MOVE_TILES;
+    }
 
 
 }
