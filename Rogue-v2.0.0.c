@@ -135,6 +135,8 @@ typedef struct {
 
 ENEMY GLOBAL_ALL_ENEMIES[4][6];
 
+ENEMY GLOBAL_BOSSES_IN_LAST_ROOM[4];
+
 BUFFS GLOBAL_EFFECTS_STORAGE;
 
 SETTINGS GLOBAL_SETTINGS;
@@ -259,7 +261,7 @@ void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT [4][38][144], Mix_Music * ,Mix_Music
 void HANDLE_HP_REGEN();
 void MOVE_ENEMIES(POINT [38][144]);
 void HANDLE_ENEMIES_COMBAT(POINT [38][144]);
-void HANDLE_PLAYER_COMBAT(POINT [38][144]);
+void HANDLE_PLAYER_COMBAT(POINT [38][144], int);
 //--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
 void PASSWORD_BACKGROUND_CHECK();
 void HANDLE_DOOR_PASSKEY_GENERATION(POINT [4][38][144]);
@@ -271,7 +273,7 @@ void REDUCE_HUNGER();
 void HANDLE_FOOD_SPOILAGE();
 //-------------------------------------------------------------Main-----------------------------------------------------------------------//
 
-int main() {/////////////////////////////////////////////////////////////////////////////////
+int main() {
 
     setlocale(LC_ALL, "");
 
@@ -2720,7 +2722,7 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.GOLD);
 
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
-/////////////////////////////////////////////////////////////////////////////////////////////
+
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_REGULAR);
 
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.FOOD_MAGIC);
@@ -2736,7 +2738,7 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
             fscanf(SAVES,"%d",&GLOBAL_EFFECTS_STORAGE.H);
 
             fscanf(SAVES,"%d",&GLOBAL_EFFECTS_STORAGE.S);
-///////////////////////////////////////////////////////////////////////////////////////////
+
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.HP);
 
             fscanf(SAVES,"%d",&GLOBAL_INVENTORY_AND_COORDINATES.HUNGER);
@@ -2779,6 +2781,17 @@ void LOAD_MAP_AND_INVENTORY(POINT MAP[4][38][144]) {
                     &GLOBAL_ALL_ENEMIES[i][j].SYMBOL,&GLOBAL_ALL_ENEMIES[i][j].x,&GLOBAL_ALL_ENEMIES[i][j].y);
                 }
             }
+        
+            for(int i=0 ; i<4 ; i++) { 
+
+                fscanf(SAVES,"%d %d %d %d %d %d %d %d",&GLOBAL_BOSSES_IN_LAST_ROOM[i].DMG,&GLOBAL_BOSSES_IN_LAST_ROOM[i].HP
+                    
+                ,&GLOBAL_BOSSES_IN_LAST_ROOM[i].MAX_HP,&GLOBAL_BOSSES_IN_LAST_ROOM[i].MAX_MOVE_TILES,&GLOBAL_BOSSES_IN_LAST_ROOM[i].MOVES_LEFT,
+                    
+                &GLOBAL_BOSSES_IN_LAST_ROOM[i].SYMBOL,&GLOBAL_BOSSES_IN_LAST_ROOM[i].x,&GLOBAL_BOSSES_IN_LAST_ROOM[i].y);
+            }
+        
+        
         }
 
         fclose(SAVES);
@@ -4829,7 +4842,7 @@ void HANDLE_USER_INPUT_AND_MOVE_HERO(char *TEMP_PTR, POINT MAP[4][38][144]) {
 
 }
 
-int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {///////////////////////////////////////////////////////////
+int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) {
 
     switch(USER_INPUT) //inventory and other stuff will be implemented later.
     //movement with numpad added
@@ -5804,9 +5817,193 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
 
         case ' ' : {
             
+            if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='m' || GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s') {
+                HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],0);
+            }
+            else {
+                switch(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON) {
+
+                    case 'w' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.WAND>0) {
+                            int DIR=getch();
+
+                            if(DIR!=ERR) {
+                                GLOBAL_LAST_FIRED_DIR=DIR;
+                                HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],DIR);
+                            }
+
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+
+                        break;
+                    }
+                    case 'd' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.DAGGER>0) {
+
+                            int DIR=getch();
+
+                            if(DIR!=ERR) {
+                                GLOBAL_LAST_FIRED_DIR=DIR;
+                                HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],DIR);
+                            }
+                            
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+                        break;
+                    }
+                    case 'a' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.ARROW>0) {
+                            
+                            int DIR=getch();
+
+                            if(DIR!=ERR) {
+                                GLOBAL_LAST_FIRED_DIR=DIR;
+                                HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],DIR);
+                            }
+                            
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+                        break;
+                    }
+                }
+            }
+
+            break;
         }
-        //add attack buttons
         
+        case 'a' : {
+
+            if(GLOBAL_LAST_FIRED_DIR!=0) {
+
+                switch(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON) {
+
+                    case 'w' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.WAND>0) {
+                            
+                            HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],GLOBAL_LAST_FIRED_DIR);
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+                        
+                        break;
+                    }
+                    case 'd' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.DAGGER>0) {
+
+                            HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],GLOBAL_LAST_FIRED_DIR);
+                            
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+                        break;
+                    }
+                    case 'a' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.ARROW>0) {
+                            
+                            HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],GLOBAL_LAST_FIRED_DIR);
+                            
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+                        break;
+                    }
+                
+                }
+            }
+
+            else {
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Firing Direction Used Yet.");   
+            }
+
+            break;
+        }
+        
+        case 'A' : {
+
+            if(GLOBAL_LAST_FIRED_DIR!=0) {
+
+                switch(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON) {
+
+                    case 'w' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.WAND>0) {
+                            
+                            HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],GLOBAL_LAST_FIRED_DIR);
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+                        
+                        break;
+                    }
+                    case 'd' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.DAGGER>0) {
+
+                            HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],GLOBAL_LAST_FIRED_DIR);
+                            
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+                        break;
+                    }
+                    case 'a' :{
+
+                        if(GLOBAL_INVENTORY_AND_COORDINATES.ARROW>0) {
+                            
+                            HANDLE_PLAYER_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR],GLOBAL_LAST_FIRED_DIR);
+                            
+                        }
+                        else {
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Ammo!");
+                        }
+
+                        break;
+                    }
+                
+                }
+            }
+
+            else {
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+                strcpy(GLOBAL_MOST_RECENT_MESSAGE,"No Firing Direction Used Yet.");   
+            }
+
+            break;
+            
+        }
 
     }
 
@@ -6756,7 +6953,7 @@ void REVEAL_ENTIRE_SECTOR(POINT MAP[4][38][144],int SECTOR) {
     }
 }
 
-void REVEAL_HALLWAYS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES_LEFT , int CURSOR_X , int CURSOR_Y) {//
+void REVEAL_HALLWAYS(POINT MAP[4][38][144], char DONT_CHECK_DIRECTION,int MOVES_LEFT , int CURSOR_X , int CURSOR_Y) {
 
     if(MOVES_LEFT!=0) {
 
@@ -7271,7 +7468,7 @@ int HANDLE_ANCIENT_KEY_USAGE() {
 
 }
 
-void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {///////////////////////////////////////////////////////////
+void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {
     //change picked up items' color to theme default
     switch(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS) {
 
@@ -7616,9 +7813,63 @@ void HANDLE_ITEM_PICKUPS(POINT MAP[4][38][144],char *TEMP_PTR) {////////////////
         }
     
         //add throwables' fragments here.
-    
-    
-    
+        case 'i' : {//one dagger
+            *TEMP_PTR='.';
+
+            MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS='.';
+
+            MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].COLOR
+            
+            =GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES
+            
+            .x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
+
+            GLOBAL_INVENTORY_AND_COORDINATES.DAGGER+=1;
+
+            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+
+            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Picked Up 1 Dagger");
+
+            PRINT_MESSAGE("You Picked Up 1 Dagger");
+        }
+        case 'a' : {// one arrow
+            *TEMP_PTR='.';
+
+            MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS='.';
+
+            MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].COLOR
+            
+            =GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES
+            
+            .x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
+
+            GLOBAL_INVENTORY_AND_COORDINATES.ARROW+=1;
+
+            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+
+            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Picked Up 1 Arrow");
+
+            PRINT_MESSAGE("You Picked Up 1 Arrow");
+        }
+        case 'z' : {//one wand
+            *TEMP_PTR='.';
+
+            MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS='.';
+
+            MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].COLOR
+            
+            =GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES
+            
+            .x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1];
+
+            GLOBAL_INVENTORY_AND_COORDINATES.WAND+=1;
+
+            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+
+            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Picked Up 1 Wand");
+
+            PRINT_MESSAGE("You Picked Up 1 Wand");
+        }
     
     
     }
@@ -7929,6 +8180,14 @@ void SAVE_GAME(POINT MAP[4][38][144],int DELTA_T_PLAYED) {
             }
         }
 
+        for(int i=0 ; i<4 ; i++) { 
+            fprintf(SAVE_LOCATION," %d %d %d %d %d %d %d %d",GLOBAL_BOSSES_IN_LAST_ROOM[i].DMG,GLOBAL_BOSSES_IN_LAST_ROOM[i].HP
+                
+            ,GLOBAL_BOSSES_IN_LAST_ROOM[i].MAX_HP,GLOBAL_BOSSES_IN_LAST_ROOM[i].MAX_MOVE_TILES,GLOBAL_BOSSES_IN_LAST_ROOM[i].MOVES_LEFT,
+                
+            GLOBAL_BOSSES_IN_LAST_ROOM[i].SYMBOL,GLOBAL_BOSSES_IN_LAST_ROOM[i].x,GLOBAL_BOSSES_IN_LAST_ROOM[i].y);
+        }
+
         fclose(SAVE_LOCATION);
 
     }
@@ -7964,17 +8223,20 @@ void OPEN_DEATH_MENU() {
 
     mvprintw(ROW/2 +1,COLUMN/2 -8,"Your Score : %d",GLOBAL_INVENTORY_AND_COORDINATES.SCORE);
 
-    //wipe out last save
+    //wipe out last save if not guest.
 
-    char STRING[100]="saves_";
+    if(GLOBAL_IS_GUEST==FALSE) {
 
-    strcat(STRING,GLOBAL_LOGGED_IN_USER);
+        char STRING[100]="saves_";
 
-    strcat(STRING,".txt");
+        strcat(STRING,GLOBAL_LOGGED_IN_USER);
 
-    FILE *SAVE_LOCATION=fopen(STRING,"w+");
+        strcat(STRING,".txt");
 
-    fclose(SAVE_LOCATION);
+        FILE *SAVE_LOCATION=fopen(STRING,"w+");
+
+        fclose(SAVE_LOCATION);
+    }
 
     refresh();  attroff(RED_COLORED_CELL); getch();
 
@@ -9062,6 +9324,37 @@ void GENERATE_ENEMIES(POINT FLOOR[38][144], int FLOOR_NUMBER) {
                 }
             }
         }
+        
+        else if(GLOBAL_ALL_THEMES_COLOR[FLOOR_NUMBER-1][i]=='y') {
+
+            for(int k=0 ; k<4 ; k++) {
+                
+                int X_RNG,Y_RNG;
+
+                while(TRUE) {
+
+                    X_RNG=rand()%144; Y_RNG=rand()%38;
+
+                    if(FLOOR[Y_RNG][X_RNG].REAL_CONTENTS=='.' && X_RNG>=48*(i%3) && X_RNG<48*(i%3+1) && Y_RNG>=19*(i/3) && Y_RNG<19*(i/3+1))
+                    {
+                        FLOOR[Y_RNG][X_RNG].REAL_CONTENTS='S';
+                        FLOOR[Y_RNG][X_RNG].SYMBOL='S';
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].DMG=8;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].HP=20;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].MAX_HP=20;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].MAX_MOVE_TILES=-1;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].MOVES_LEFT=-1;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL='S';
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].x=X_RNG;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].y=Y_RNG;
+
+                        break;
+                    }
+                }
+            }
+
+        }
+        
         else {
             GLOBAL_ALL_ENEMIES[FLOOR_NUMBER-1][i].DMG=0;
             GLOBAL_ALL_ENEMIES[FLOOR_NUMBER-1][i].HP=0;
@@ -9076,13 +9369,87 @@ void GENERATE_ENEMIES(POINT FLOOR[38][144], int FLOOR_NUMBER) {
 
 }
 
-void MOVE_ENEMIES(POINT FLOOR[38][144]) {///////////////////////////////////////////TOF LAZEM
+void MOVE_ENEMIES(POINT FLOOR[38][144]) {
 
     int SECTOR=GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1;
 
-    if(FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS!='#' 
+    if(GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR]=='y' 
     
-    && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP>0 && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT!=0) {
+    && FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS!='#') {
+        
+        for(int k=0 ; k<4 ; k++) {
+
+            if(GLOBAL_BOSSES_IN_LAST_ROOM[k].HP>0) {
+
+                int past_x=GLOBAL_BOSSES_IN_LAST_ROOM[k].x;
+        
+                int past_y=GLOBAL_BOSSES_IN_LAST_ROOM[k].y;
+
+                if(GLOBAL_INVENTORY_AND_COORDINATES.x-GLOBAL_BOSSES_IN_LAST_ROOM[k].x>0 
+            
+                && FLOOR[past_y][past_x+1].REAL_CONTENTS=='.' && FLOOR[past_y][past_x+1].SYMBOL=='.') {
+
+                    FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+                    GLOBAL_BOSSES_IN_LAST_ROOM[k].x++;
+
+                    FLOOR[past_y][past_x+1].SYMBOL=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL; 
+                
+                    FLOOR[past_y][past_x+1].REAL_CONTENTS=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL;
+
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.x-GLOBAL_BOSSES_IN_LAST_ROOM[k].x<0 
+                
+                && FLOOR[past_y][past_x-1].REAL_CONTENTS=='.' && FLOOR[past_y][past_x-1].SYMBOL=='.') {
+                    
+                    FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+                    GLOBAL_BOSSES_IN_LAST_ROOM[k].x--;
+
+                    FLOOR[past_y][past_x-1].SYMBOL=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL; 
+                    
+                    FLOOR[past_y][past_x-1].REAL_CONTENTS=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL;
+
+                    
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.y-GLOBAL_BOSSES_IN_LAST_ROOM[k].y>0
+                
+                && FLOOR[past_y+1][past_x].REAL_CONTENTS=='.' && FLOOR[past_y+1][past_x].SYMBOL=='.') {
+
+                    FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+                    GLOBAL_BOSSES_IN_LAST_ROOM[k].y++;
+
+                    FLOOR[past_y+1][past_x].SYMBOL=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL; 
+                    
+                    FLOOR[past_y+1][past_x].REAL_CONTENTS=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL;
+                    
+                }
+                else if(GLOBAL_INVENTORY_AND_COORDINATES.y-GLOBAL_BOSSES_IN_LAST_ROOM[k].y<0
+                
+                && FLOOR[past_y-1][past_x].REAL_CONTENTS=='.' && FLOOR[past_y-1][past_x].SYMBOL=='.') {
+
+                    FLOOR[past_y][past_x].SYMBOL='.'; FLOOR[past_y][past_x].REAL_CONTENTS='.';
+
+                    GLOBAL_BOSSES_IN_LAST_ROOM[k].y--;
+
+                    FLOOR[past_y-1][past_x].SYMBOL=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL; 
+                    
+                    FLOOR[past_y-1][past_x].REAL_CONTENTS=GLOBAL_BOSSES_IN_LAST_ROOM[k].SYMBOL;
+
+                }
+
+            }
+
+        }
+
+    }
+
+    else {
+
+        if(FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS!='#' 
+    
+        && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP>0 && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT!=0) {
 
         int MOVE_SUCCESS=FALSE;
 
@@ -9148,8 +9515,6 @@ void MOVE_ENEMIES(POINT FLOOR[38][144]) {///////////////////////////////////////
         }
 
 
-
-
         if(MOVE_SUCCESS && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MAX_MOVE_TILES>0) {
 
             GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT--;
@@ -9160,10 +9525,10 @@ void MOVE_ENEMIES(POINT FLOOR[38][144]) {///////////////////////////////////////
 
     }
 
-    if(FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS=='+') {
-        GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MAX_MOVE_TILES;
+        if(FLOOR[GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS=='+') {
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MAX_MOVE_TILES;
+        }
     }
-
 
 }
 
@@ -9608,11 +9973,58 @@ void HANDLE_ENEMIES_COMBAT(POINT FLOOR[38][144]) {
 
 }
 
-void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144]) {////////////////////////////////////////////////
+void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {////////////////////////////////////////////////
+
+    int SECTOR=GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1;
+
+    if(GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR]=='y') {// Boss room
+
+        if(DIRECTION==0) {//melee
+            if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s') {//sword
 
 
 
 
+
+            }
+            else {//mace
+
+            }
+        }
+
+        else {//ranged
+
+
+
+        }
+    
+    }
+
+    else {//regular rooms
+
+        if(DIRECTION==0) {//melee
+            
+            if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s') {//sword
+
+
+
+
+
+            }
+        
+            else {//mace
+
+            }
+        }
+        
+        else {//ranged
+
+
+
+        }
+
+
+    }
 
 }
 
