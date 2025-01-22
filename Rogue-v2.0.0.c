@@ -9973,28 +9973,136 @@ void HANDLE_ENEMIES_COMBAT(POINT FLOOR[38][144]) {
 
 }
 
-void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {////////////////////////////////////////////////
+void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {
 
     int SECTOR=GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1;
+
 
     if(GLOBAL_ALL_THEMES_COLOR[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR]=='y') {// Boss room
 
         if(DIRECTION==0) {//melee
-            if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s') {//sword
+            
+            for(int k=0 ; k<4 ; k++) { 
+
+                int enemy_x=GLOBAL_BOSSES_IN_LAST_ROOM[k].x;
+
+                int enemy_y=GLOBAL_BOSSES_IN_LAST_ROOM[k].y;
+                
+                if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s'&& GLOBAL_BOSSES_IN_LAST_ROOM[k].HP>0) {//sword
+
+                    int ENEMY_IN_RANGE=FALSE;
+
+                    if(FLOOR[enemy_y][enemy_x+1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y][enemy_x-1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y+1][enemy_x+1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y-1][enemy_x+1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y+1][enemy_x-1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y-1][enemy_x-1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y+1][enemy_x].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y-1][enemy_x].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+
+                    if(ENEMY_IN_RANGE) {
+                        if(GLOBAL_EFFECTS_STORAGE.D>0) {
+                            GLOBAL_BOSSES_IN_LAST_ROOM[k].HP-=20;
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 20 HP!");
+                        }
+                        else {
+                            GLOBAL_BOSSES_IN_LAST_ROOM[k].HP-=10;
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 10 HP!");
+                        }
+                    }
+
+                    if(GLOBAL_BOSSES_IN_LAST_ROOM[k].HP<=0 && ENEMY_IN_RANGE) {
+                        FLOOR[ GLOBAL_BOSSES_IN_LAST_ROOM[k].y][ GLOBAL_BOSSES_IN_LAST_ROOM[k].x].REAL_CONTENTS='.';
+                        FLOOR[ GLOBAL_BOSSES_IN_LAST_ROOM[k].y][ GLOBAL_BOSSES_IN_LAST_ROOM[k].x].SYMBOL='.';
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].y=1;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].x=1;
+                        GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                        strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Defeated The Enemy!");
+                    }
 
 
 
+                }
+            
+                else if(GLOBAL_BOSSES_IN_LAST_ROOM[k].HP>0 && GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='m') {//mace
+                    
+                    int ENEMY_IN_RANGE=FALSE;
 
+                    if(FLOOR[enemy_y][enemy_x+1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y][enemy_x-1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y+1][enemy_x+1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y-1][enemy_x+1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y+1][enemy_x-1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y-1][enemy_x-1].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y+1][enemy_x].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
+                    if(FLOOR[enemy_y-1][enemy_x].SYMBOL=='H') {
+                        ENEMY_IN_RANGE++;
+                    }
 
+                    if(ENEMY_IN_RANGE) {
+                        if(GLOBAL_EFFECTS_STORAGE.D>0) {
+                            GLOBAL_BOSSES_IN_LAST_ROOM[k].HP-=10;
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 10 HP!");
+                        }
+                        else {
+                            GLOBAL_BOSSES_IN_LAST_ROOM[k].HP-=5;
+                            GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                            strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 5 HP!");
+                        }
+                    }
+
+                    if(GLOBAL_BOSSES_IN_LAST_ROOM[k].HP<=0 && ENEMY_IN_RANGE) {
+                        FLOOR[ GLOBAL_BOSSES_IN_LAST_ROOM[k].y][ GLOBAL_BOSSES_IN_LAST_ROOM[k].x].REAL_CONTENTS='.';
+                        FLOOR[ GLOBAL_BOSSES_IN_LAST_ROOM[k].y][ GLOBAL_BOSSES_IN_LAST_ROOM[k].x].SYMBOL='.';
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].y=1;
+                        GLOBAL_BOSSES_IN_LAST_ROOM[k].x=1;
+                        GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                        strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Defeated The Enemy!");
+                    }
+
+                }
+                
             }
-            else {//mace
-
-            }
+            
         }
 
         else {//ranged
 
-
+            
 
         }
     
@@ -10003,18 +10111,119 @@ void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {////////////////
     else {//regular rooms
 
         if(DIRECTION==0) {//melee
+
+            int enemy_x=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x;
+
+            int enemy_y=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y;
             
-            if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s') {//sword
+            if(GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='s' && GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP>0) {//sword
 
+                int ENEMY_IN_RANGE=FALSE;
 
+                if(FLOOR[enemy_y][enemy_x+1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y][enemy_x-1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y+1][enemy_x+1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y-1][enemy_x+1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y+1][enemy_x-1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y-1][enemy_x-1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y+1][enemy_x].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y-1][enemy_x].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+
+                if(ENEMY_IN_RANGE) {
+                    if(GLOBAL_EFFECTS_STORAGE.D>0) {
+                        GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP-=20;
+                        GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                        strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 20 HP!");
+                    }
+                    else {
+                        GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP-=10;
+                        GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                        strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 10 HP!");
+                    }
+                }
+
+                if(GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP<=0 && ENEMY_IN_RANGE) {
+                    FLOOR[ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y][ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x].REAL_CONTENTS='.';
+                    FLOOR[ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y][ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x].SYMBOL='.';
+                    GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y=1;
+                    GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x=1;
+                    GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                    strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Defeated The Enemy!");
+                }
 
 
 
             }
         
-            else {//mace
+            else if(GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP>0 && GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON=='m') {//mace
+                
+                int ENEMY_IN_RANGE=FALSE;
+
+                if(FLOOR[enemy_y][enemy_x+1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y][enemy_x-1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y+1][enemy_x+1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y-1][enemy_x+1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y+1][enemy_x-1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y-1][enemy_x-1].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y+1][enemy_x].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+                if(FLOOR[enemy_y-1][enemy_x].SYMBOL=='H') {
+                    ENEMY_IN_RANGE++;
+                }
+
+                if(ENEMY_IN_RANGE) {
+                    if(GLOBAL_EFFECTS_STORAGE.D>0) {
+                        GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP-=10;
+                        GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                        strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 10 HP!");
+                    }
+                    else {
+                        GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP-=5;
+                        GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                        strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Hit The Enemy For 5 HP!");
+                    }
+                }
+
+                if(GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].HP<=0 && ENEMY_IN_RANGE) {
+                    FLOOR[ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y][ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x].REAL_CONTENTS='.';
+                    FLOOR[ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y][ GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x].SYMBOL='.';
+                    GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y=1;
+                    GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x=1;
+                    GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='y';
+                    strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Defeated The Enemy!");
+                }
 
             }
+            
         }
         
         else {//ranged
@@ -10025,7 +10234,7 @@ void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {////////////////
 
 
     }
-
+        
 }
 
 
