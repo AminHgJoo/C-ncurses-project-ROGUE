@@ -143,13 +143,15 @@ INVENTORY_AND_STATS GLOBAL_INVENTORY_AND_COORDINATES;//must be saved at exit
 
 int GLOBAL_LOAD_SAVE=FALSE;
 
+int GLOBAL_LAST_FIRED_DIR=0;
+
 int ROW,COLUMN;
 
 int GLOBAL_IS_GUEST=0;
 
 char GLOBAL_LOGGED_IN_USER[100];
 
-int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_of_game exit, 3 is saved and quit
+int GLOBAL_EXIT_CODE=0;        // 0 is no exiting, 1 is unsaved exit, 2 is end_of_game exit, 3 is saved and quit, 4 is lose exit
 
 int GLOBAL_SHOW_ALL=FALSE;
 
@@ -256,6 +258,8 @@ void PERFORM_ENCHANT_THEME_EFFECT_CHECK(POINT [4][38][144]);
 void HANDLE_THEME_CHANGE_MUSIC_CHANGE(POINT [4][38][144], Mix_Music * ,Mix_Music *);
 void HANDLE_HP_REGEN();
 void MOVE_ENEMIES(POINT [38][144]);
+void HANDLE_ENEMIES_COMBAT(POINT [38][144]);
+void HANDLE_PLAYER_COMBAT(POINT [38][144]);
 //--------------------------------------------------Handling Passkey Doors-------------------------------------------------------------//
 void PASSWORD_BACKGROUND_CHECK();
 void HANDLE_DOOR_PASSKEY_GENERATION(POINT [4][38][144]);
@@ -268,6 +272,12 @@ void HANDLE_FOOD_SPOILAGE();
 //-------------------------------------------------------------Main-----------------------------------------------------------------------//
 
 int main() {/////////////////////////////////////////////////////////////////////////////////
+
+    setlocale(LC_ALL, "");
+
+    initscr();
+
+    start :
 
     int OK_SCREEN_SIZE=TRUE;
 
@@ -361,9 +371,7 @@ int main() {////////////////////////////////////////////////////////////////////
 
         PERFORM_ENCHANT_THEME_EFFECT_CHECK(MAP);
 
-
-
-
+        HANDLE_ENEMIES_COMBAT(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR]);
 
         PERFORM_DEATH_CHECK();
 
@@ -393,11 +401,49 @@ int main() {////////////////////////////////////////////////////////////////////
 
             SAVE_ONTO_SCOREBOARD(FINISH_TIME-START_TIME+GLOBAL_INVENTORY_AND_COORDINATES.TIME_PLAYED);
 
+            char STRING[100]="saves_";
+
+            strcat(STRING,GLOBAL_LOGGED_IN_USER);
+
+            strcat(STRING,".txt");
+
+            FILE *SAVE_LOCATION=fopen(STRING,"w+");
+
+            fclose(SAVE_LOCATION);
+
         }
 
     } 
     
     SHUTDOWN_GAME(music);
+
+    if(GLOBAL_EXIT_CODE==4 || GLOBAL_EXIT_CODE==2) {
+        
+        GLOBAL_EXIT_CODE=0;
+
+        GLOBAL_LAST_FIRED_DIR=0;
+
+        GLOBAL_SHOW_ALL=FALSE;
+
+        GLOBAL_IS_GUEST=0;
+
+        GLOBAL_LAST_THEME_IN=0;
+
+        GLOBAL_MOST_RECENT_PASSWORD_REQUEST_TIME=0;
+
+        GLOBAL_DOOR_PASSWORD=-1; 
+
+        GLOBAL_IS_PASSWORD_DYNAMIC=FALSE;
+
+        GLOBAL_PASSWORD_DOOR_BACKGROUND_CHECK=FALSE;
+
+        GLOBAL_LOAD_SAVE=FALSE;
+
+        goto start;
+
+    }
+
+    endwin();
 
     return 0;
 }
@@ -5756,12 +5802,22 @@ int PROCESS_PLAYER_INPUT(int USER_INPUT,POINT MAP[4][38][144], char * TEMP_PTR) 
             break;
         }
 
+        case ' ' : {
+            
+        }
         //add attack buttons
         
 
     }
 
     if(GLOBAL_EFFECTS_STORAGE.S>0 && (USER_INPUT>='1') && (USER_INPUT<='9') && USER_INPUT!='5') {
+
+        int SECTOR=GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1;
+        
+        if(MAP[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][GLOBAL_INVENTORY_AND_COORDINATES.y][GLOBAL_INVENTORY_AND_COORDINATES.x].REAL_CONTENTS=='+') {
+            GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MOVES_LEFT=GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].MAX_MOVE_TILES;
+        }
+
         switch(USER_INPUT) {
         
         case '8': {//up
@@ -7687,9 +7743,13 @@ void START_GAME(int* OK_LAUNCH) {
 
     GLOBAL_EFFECTS_STORAGE.D=0; GLOBAL_EFFECTS_STORAGE.H=0; GLOBAL_EFFECTS_STORAGE.S=0; GLOBAL_INVENTORY_AND_COORDINATES.EQUIPPED_WEAPON='m';
 
-    setlocale(LC_ALL, "");  srand(time(NULL)); 
+    //setlocale(LC_ALL, "");  
+    
+    srand(time(NULL)); 
 
-    initscr();  noecho();   curs_set(0);    keypad(stdscr,TRUE);
+    //initscr();  
+    
+    noecho();   curs_set(0);    keypad(stdscr,TRUE);
 
     getmaxyx(stdscr,ROW,COLUMN);
 
@@ -7724,9 +7784,11 @@ void SHUTDOWN_GAME(Mix_Music *music) {
 
     cbreak();   clear();    attrset(GOLD_COLORED_CELL);  curs_set(0);
 
-    mvprintw(ROW/2,COLUMN/2 -24,"Hope You Had Fun! Press a Key to Close The Game.");
+    mvprintw(ROW/2,COLUMN/2 -24,"Hope You Had Fun! Press a Key to Continue.");
 
-    refresh();  getch();    endwin();
+    refresh();  getch();   refresh(); clear();  
+    
+    //endwin();
 
     Mix_CloseAudio();   Mix_FreeMusic(music);   SDL_Quit();
 
@@ -7894,7 +7956,7 @@ void PERFORM_DEATH_CHECK() {
 
 void OPEN_DEATH_MENU() {
 
-    GLOBAL_EXIT_CODE=1;
+    GLOBAL_EXIT_CODE=4;
 
     clear(); attron(RED_COLORED_CELL); cbreak();
 
@@ -9014,7 +9076,7 @@ void GENERATE_ENEMIES(POINT FLOOR[38][144], int FLOOR_NUMBER) {
 
 }
 
-void MOVE_ENEMIES(POINT FLOOR[38][144]) {/////////////////////////////////////////////////
+void MOVE_ENEMIES(POINT FLOOR[38][144]) {///////////////////////////////////////////TOF LAZEM
 
     int SECTOR=GIVE_SECTOR_NUMBER(GLOBAL_INVENTORY_AND_COORDINATES.x,GLOBAL_INVENTORY_AND_COORDINATES.y)-1;
 
@@ -9105,15 +9167,454 @@ void MOVE_ENEMIES(POINT FLOOR[38][144]) {///////////////////////////////////////
 
 }
 
-void HANDLE_COMBAT(POINT FLOOR[38][144]) {///////////////////////////////////////////////////
+void HANDLE_ENEMIES_COMBAT(POINT FLOOR[38][144]) {
+
+    int x=GLOBAL_INVENTORY_AND_COORDINATES.x;
+
+    int y=GLOBAL_INVENTORY_AND_COORDINATES.y;
+
+    if(FLOOR[y][x+1].REAL_CONTENTS=='D' || FLOOR[y][x+1].REAL_CONTENTS=='F' || FLOOR[y][x+1].REAL_CONTENTS=='G' || FLOOR[y][x+1].REAL_CONTENTS=='S' || FLOOR[y][x+1].REAL_CONTENTS=='U') {
+        switch(FLOOR[y][x+1].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+    if(FLOOR[y+1][x+1].REAL_CONTENTS=='D' || FLOOR[y+1][x+1].REAL_CONTENTS=='F' || FLOOR[y+1][x+1].REAL_CONTENTS=='G' || FLOOR[y+1][x+1].REAL_CONTENTS=='S' || FLOOR[y+1][x+1].REAL_CONTENTS=='U') {
+        switch(FLOOR[y+1][x+1].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+    if(FLOOR[y-1][x+1].REAL_CONTENTS=='D' || FLOOR[y-1][x+1].REAL_CONTENTS=='F' || FLOOR[y-1][x+1].REAL_CONTENTS=='G' || FLOOR[y-1][x+1].REAL_CONTENTS=='S' || FLOOR[y-1][x+1].REAL_CONTENTS=='U') {
+       switch(FLOOR[y-1][x+1].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        } 
+    }
+    if(FLOOR[y][x-1].REAL_CONTENTS=='D' || FLOOR[y][x-1].REAL_CONTENTS=='F' || FLOOR[y][x-1].REAL_CONTENTS=='G' || FLOOR[y][x-1].REAL_CONTENTS=='S' || FLOOR[y][x-1].REAL_CONTENTS=='U') {
+        switch(FLOOR[y][x-1].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+    if(FLOOR[y+1][x-1].REAL_CONTENTS=='D' || FLOOR[y+1][x-1].REAL_CONTENTS=='F' || FLOOR[y+1][x-1].REAL_CONTENTS=='G' || FLOOR[y+1][x-1].REAL_CONTENTS=='S' || FLOOR[y+1][x-1].REAL_CONTENTS=='U') {
+        switch(FLOOR[y+1][x-1].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+    if(FLOOR[y-1][x-1].REAL_CONTENTS=='D' || FLOOR[y-1][x-1].REAL_CONTENTS=='F' || FLOOR[y-1][x-1].REAL_CONTENTS=='G' || FLOOR[y-1][x-1].REAL_CONTENTS=='S' || FLOOR[y-1][x-1].REAL_CONTENTS=='U') {
+        switch(FLOOR[y-1][x-1].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+    if(FLOOR[y+1][x].REAL_CONTENTS=='D' || FLOOR[y+1][x].REAL_CONTENTS=='F' || FLOOR[y+1][x].REAL_CONTENTS=='G' || FLOOR[y+1][x].REAL_CONTENTS=='S' || FLOOR[y+1][x].REAL_CONTENTS=='U') {
+        switch(FLOOR[y+1][x].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+    if(FLOOR[y-1][x].REAL_CONTENTS=='D' || FLOOR[y-1][x].REAL_CONTENTS=='F' || FLOOR[y-1][x].REAL_CONTENTS=='G' || FLOOR[y-1][x].REAL_CONTENTS=='S' || FLOOR[y-1][x].REAL_CONTENTS=='U') {
+        switch(FLOOR[y-1][x].REAL_CONTENTS) {
+            case 'D' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Demon Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=2;
+
+                break;
+            }
+            case 'F' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Fire Monster Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=4;
+
+                break;
+            }
+            case 'G' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Giant Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=6;
+
+                break;
+            }
+            case 'S' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Snake Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=8;
+
+                break;
+            }
+            case 'U' : {
+
+                GLOBAL_MOST_RECENT_COLOR_FOR_MESSAGE='r';
+
+                PRINT_MESSAGE("The Undead Scored a Hit on You!");
+
+                GLOBAL_INVENTORY_AND_COORDINATES.HP-=12;
+
+                break;
+            }
+        }
+    }
+
+}
+
+void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144]) {////////////////////////////////////////////////
 
 
 
 
 
 }
-
-
 
 
 
