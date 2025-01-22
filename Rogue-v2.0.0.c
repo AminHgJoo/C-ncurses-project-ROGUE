@@ -10280,6 +10280,8 @@ void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {
                     strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Defeated The Enemy!");
                     FLOOR[y_bullet][x_bullet].SYMBOL='.';
                     FLOOR[y_bullet][x_bullet].REAL_CONTENTS='.';
+                    GLOBAL_BOSSES_IN_LAST_ROOM[FIND_THAT_SNAKE(x_bullet,y_bullet)].x=1;
+                    GLOBAL_BOSSES_IN_LAST_ROOM[FIND_THAT_SNAKE(x_bullet,y_bullet)].y=1;
                 }
 
             }
@@ -10621,6 +10623,8 @@ void HANDLE_PLAYER_COMBAT(POINT FLOOR[38][144], int DIRECTION) {
                     strcpy(GLOBAL_MOST_RECENT_MESSAGE,"You Defeated The Enemy!");
                     FLOOR[y_bullet][x_bullet].SYMBOL='.';
                     FLOOR[y_bullet][x_bullet].REAL_CONTENTS='.';
+                    GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].x=1;
+                    GLOBAL_ALL_ENEMIES[GLOBAL_INVENTORY_AND_COORDINATES.FLOOR][SECTOR].y=1;
                 }
 
             }
