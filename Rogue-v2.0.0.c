@@ -19,6 +19,11 @@
 #define ORANGE_COLORED_CELL COLOR_PAIR(7)
 #define BLUE_SCREEN COLOR_PAIR(12)
 #define COLOR_ORANGE COLOR_CYAN     // Cyan has been changed into Orange.
+#define MAGENTA_COLORED_CELL COLOR_PAIR(13)
+#define GREEN_W_BLUE_BG COLOR_PAIR(14)
+#define RED_W_BLUE_BG COLOR_PAIR(15)
+
+
 
 typedef struct point {
 
@@ -461,11 +466,80 @@ char GAME_STARTUP_MENU() {
 
     mvprintw(ROW-1,COLUMN/2-22,"Press e or E and arrow keys to Navigate Menus");
 
-    attron(A_ITALIC);
+    
 
-    mvprintw(ROW/4,COLUMN/2 -2,"Rogue");
+    char rogue[][120]={
+        " .----------------.  .----------------.  .----------------.  .----------------.  .----------------. ",
+        "| .--------------. || .--------------. || .--------------. || .--------------. || .--------------. |",
+        "| |  _______     | || |     ____     | || |    ______    | || | _____  _____ | || |  _________   | |",
+        "| | |_   __ \\    | || |   .'    `.   | || |  .' ___  |   | || ||_   _||_   _|| || | |_   ___  |  | |",
+        "| |   | |__) |   | || |  /  .--.  \\  | || | / .'   \\_|   | || |  | |    | |  | || |   | |_  \\_|  | |",
+        "| |   |  __ /    | || |  | |    | |  | || | | |    ____  | || |  | '    ' |  | || |   |  _|  _   | |",
+        "| |  _| |  \\ \\_  | || |  \\  `--'  /  | || | \\ `.___]  _| | || |   \\ `--' /   | || |  _| |___/ |  | |",
+        "| | |____| |___| | || |   `.____.'   | || |  `._____.'   | || |    `.__.'    | || | |_________|  | |",
+        "| |              | || |              | || |              | || |              | || |              | |",
+        "| '--------------' || '--------------' || '--------------' || '--------------' || '--------------' |",
+        " '----------------'  '----------------'  '----------------'  '----------------'  '----------------' "
+    };
 
-    attroff(A_ITALIC);
+    char skull[][65]={
+        "                  .-\"      \"-.",
+        "                 /            \\",
+        "                |              |",
+        "                |,  .-.  .-.  ,|",
+        "                | )(__/  \\__)( |",
+        "                |/     /\\     \\|",
+        "      (@_       (_     ^^     _)",
+        " _     ) \\_______\\__|IIIIII|__/__________________________",
+        "(_)@8@8{}<________|-\\IIIIII/-|___________________________>",
+        "       )_/        \\          /",
+        "      (@           `--------`"
+    };
+
+    char sword[][35]={
+        "   |\\                     /)",
+        " /\\_\\\\__               (_//",
+        "|   `>\\-`     _._       //`)",
+        " \\ /` \\\\  _.-`:::`-._  //",
+        "  `    \\|`    :::    `|/",
+        "        |     :::     |",
+        "        |.....:::.....|",
+        "        |:::::::::::::|",
+        "        |     :::     |",
+        "        \\     :::     /",
+        "         \\    :::    /",
+        "          `-. ::: .-'",
+        "           //`:::`\\\\",
+        "          //   '   \\\\",
+        "         |/         \\\\"
+    };
+
+    attroff(COLOR_PAIR(1));
+
+    attron(COLOR_PAIR(13));
+
+    for(int i=0 ; i<11 ; i++) {
+        mvprintw(1+i,COLUMN/2-strlen(rogue[0])/2,"%s",rogue[i]);
+    }
+
+    attroff(COLOR_PAIR(13));
+
+    attron(RED_COLORED_CELL);
+
+    for(int i=0 ; i<11 ; i++) {
+        mvprintw(ROW/2 +i,1,"%s",skull[i]);
+    }
+
+    for(int i=0 ; i<15 ; i++) {
+        mvprintw(ROW/2+i,3*COLUMN/4,"%s",sword[i]);
+    }
+
+
+    attroff(RED_COLORED_CELL);
+
+    attron(COLOR_PAIR(1));
+
+
 
     mvprintw(3*ROW/4,COLUMN/2-8,"Register New User");
 
@@ -556,6 +630,82 @@ void USER_REGISTERATION() {
 
     clear();
 
+    char quill[][30]={
+        "                      .`.",
+        "                   .`~.-:",
+        "                  .`- . -`",
+        "                .`-  . -`",
+        "              .`-   . -`",
+        "            .`-    . -`",
+        "          .`-     . -`",
+        "         `-      . -`",
+        "       .`-      . -`",
+        "      ;-       . -`",
+        "     .-      .  -`",
+        "    ;.      . -`",
+        "   ;.     . -`",
+        "   ::._.-`",
+        "   (.-`",
+        "   .Y(.",
+        "  ((()))",
+        "  _)==(_",
+        " | .--. |",
+        " | '--' |",
+        " '------'"
+    };
+
+    char register_art[][80]={
+        " _______  _______  _______ _________ _______ _________ _______  _______ ",
+        "(  ____ )(  ____ \\(  ____ \\\\__   __/(  ____ \\\\__   __/(  ____ \\(  ____ )",
+        "| (    )|| (    \\/| (    \\/   ) (   | (    \\/   ) (   | (    \\/| (    )|",
+        "| (____)|| (__    | |         | |   | (_____    | |   | (__    | (____)|",
+        "|     __)|  __)   | | ____    | |   (_____  )   | |   |  __)   |     __)",
+        "| (\\ (   | (      | | \\_  )   | |         ) |   | |   | (      | (\\ (   ",
+        "| ) \\ \\__| (____/\\| (___) |___) (___/\\____) |   | |   | (____/\\| ) \\ \\__",
+        "|/   \\__/(_______/(_______)\\_______/\\_______)   )_(   (_______/|/   \\__/"
+    };
+
+    char lock[][30]={
+        "            .-\"\"-.",
+        "           / .--. \\",
+        "          / /    \\ \\",
+        "          | |    | |",
+        "          | |.-\"\"-.|",
+        "         ///`.::::.`\\",
+        "        ||| ::/  \\:: ;",
+        "        ||; ::\\__/:: ;",
+        "         \\\\\\ '::::' /",
+        "          `=':-..-'`"
+    };
+
+    char mail[][40]={
+        "            ____________",
+        "           /     _.'\\   \\",
+        "          /   _.'    \\   \\",
+        "         /_.-'        \\___\\",
+        "        |\\_\\ ``   .-   \\ _/|",
+        "        |  _\\___________.  |", 
+        "        | /              \\ |", 
+        "        |/                \\|", 
+        "        |__________________|"
+    };
+
+    attron(GREEN_COLORED_CELL);
+
+    for(int i=0 ; i<21 ; i++) {
+        mvprintw(ROW/4 +i,1,"%s",quill[i]);
+    }
+
+    attroff(GREEN_COLORED_CELL);
+
+    attron(MAGENTA_COLORED_CELL);
+
+    for(int i=0 ; i<8 ; i++) {
+        mvprintw(1+i,COLUMN/2 - strlen(register_art[0])/2,"%s",register_art[i]);
+    }
+
+    attroff(MAGENTA_COLORED_CELL);
+
     echo();
 
     curs_set(1);
@@ -568,7 +718,7 @@ void USER_REGISTERATION() {
 
     attron(A_ITALIC);
 
-    mvprintw(ROW/3 +1, COLUMN/2 -46 ,"Note : Username Must Not Contain Spaces, Be Already Taken, or Be Longer Than 15 Characters");
+    mvprintw(ROW/3 +1, COLUMN/2 -38 ,"Note : Username Mustn't Have Spaces, Be Already Taken, or Be Longer Than 15");
 
     attroff(A_ITALIC);
 
@@ -581,6 +731,10 @@ void USER_REGISTERATION() {
     char USERNAME[100];
 
     while(TRUE) { //get valid username
+
+        mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+        move(2*ROW/3, COLUMN/2 -7);
 
         getstr(USERNAME);
 
@@ -663,11 +817,31 @@ void USER_REGISTERATION() {
 
     clear();
 
+    attroff(GOLD_COLORED_CELL);
+
+    attron(MAGENTA_COLORED_CELL);
+
+    for(int i=0 ; i<8 ; i++) {
+        mvprintw(1+i,COLUMN/2 - strlen(register_art[0])/2,"%s",register_art[i]);
+    }
+
+    attroff(MAGENTA_COLORED_CELL);
+
+    attron(GREEN_COLORED_CELL);
+
+    for(int i=0 ; i<10 ; i++) {
+        mvprintw(ROW/2+i,1,"%s",lock[i]);
+    }
+
+    attroff(GREEN_COLORED_CELL);
+
+    attron(GOLD_COLORED_CELL);
+
     mvprintw(ROW/3,COLUMN/2 -24,"Choose a Password. Enter r For a Random Password");
 
     attron(A_ITALIC);
 
-    mvprintw(ROW/3 +1, COLUMN/2 -54 ,"Note : Password Must Be Longer Than 6 and Shorter Than 16; Must Have a Number, Lowercase, and Capital Letter");
+    mvprintw(ROW/3 +1, COLUMN/2 -46 ,"Note : Must Be Longer Than 6 & Shorter Than 16; Have a Number, Lowercase, and Capital Letter");
 
     attroff(A_ITALIC);
 
@@ -681,11 +855,23 @@ void USER_REGISTERATION() {
 
     while(TRUE) {
 
+        mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+        move(2*ROW/3, COLUMN/2 -7);
+
         getstr(PASSWORD);
 
         if(strcmp(PASSWORD,"r")==0 || strcmp(PASSWORD,"R")==0) {
 
             CLEAR_TEXT_FOR_LOGIN_ERRORS();
+
+            attrset(GOLD_COLORED_CELL);
+
+            mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+            move(2*ROW/3, COLUMN/2 -7);
+
+            attrset(GREEN_COLORED_CELL);
 
             mvprintw(ROW/3 +2 ,COLUMN/2 -26,"Random Password Generated. Press a Key to continue.");
 
@@ -710,6 +896,10 @@ void USER_REGISTERATION() {
         if(strlen(PASSWORD)<7 || strlen(PASSWORD) >15) {
 
             CLEAR_TEXT_FOR_LOGIN_ERRORS();
+
+            mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+            move(2*ROW/3, COLUMN/2 -7);
 
             mvprintw(ROW/3+2,COLUMN/2 -12 ,"Invalid Password Length");
 
@@ -800,6 +990,28 @@ void USER_REGISTERATION() {
 
     clear();
 
+    attroff(GOLD_COLORED_CELL);
+
+    attron(MAGENTA_COLORED_CELL);
+
+    for(int i=0 ; i<8 ; i++) {
+        mvprintw(1+i,COLUMN/2 - strlen(register_art[0])/2,"%s",register_art[i]);
+    }
+
+    attroff(MAGENTA_COLORED_CELL);
+
+    attron(GREEN_COLORED_CELL);
+
+    for(int i=0 ; i<9 ; i++) {
+        mvprintw(ROW/2+i,1,"%s",mail[i]);
+    }
+
+
+
+    attroff(GREEN_COLORED_CELL);
+
+    attron(GOLD_COLORED_CELL);
+
     mvprintw(ROW/3,COLUMN/2-9,"Enter Your E-Mail");
 
     attron(A_ITALIC);
@@ -816,6 +1028,10 @@ void USER_REGISTERATION() {
     //get valid email, clear error bar and text box each time
     
     while(TRUE) {
+
+        mvprintw(2*ROW/3,COLUMN/2-21,">");
+
+        move(2*ROW/3, COLUMN/2 -20);
 
         getstr(EMAIL);
 
@@ -905,6 +1121,10 @@ void USER_REGISTERATION() {
 
     RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
 
+    mvprintw(2*ROW/3,COLUMN/2-21,">");
+
+    move(2*ROW/3, COLUMN/2 -20);
+
     mvprintw(ROW/3+ 3,COLUMN/2 - 25,"Registeration Successful. Press a Key to Continue.");
 
     refresh();
@@ -920,6 +1140,82 @@ int USER_LOGIN() {
 
     clear();
 
+    char login[][50]={
+        " _        _______  _______ _________ _       ",
+        "( \\      (  ___  )(  ____ \\__   __/( (    /|",
+        "| (      | (   ) || (    \\/   ) (   |  \\  ( |",
+        "| |      | |   | || |         | |   |   \\ | |",
+        "| |      | |   | || | ____    | |   | (\\ \\) |",
+        "| |      | |   | || | \\_  )   | |   | | \\   |",
+        "| (____/\\| (___) || (___) |___) (___| )  \\  |",
+        "(_______/(_______)(_______)\\_______/|/    )_)"
+    };
+
+    char quill[][30]={
+        "                      .`.",
+        "                   .`~.-:",
+        "                  .`- . -`",
+        "                .`-  . -`",
+        "              .`-   . -`",
+        "            .`-    . -`",
+        "          .`-     . -`",
+        "         `-      . -`",
+        "       .`-      . -`",
+        "      ;-       . -`",
+        "     .-      .  -`",
+        "    ;.      . -`",
+        "   ;.     . -`",
+        "   ::._.-`",
+        "   (.-`",
+        "   .Y(.",
+        "  ((()))",
+        "  _)==(_",
+        " | .--. |",
+        " | '--' |",
+        " '------'"
+    };
+
+    char lock[][30]={
+        "            .-\"\"-.",
+        "           / .--. \\",
+        "          / /    \\ \\",
+        "          | |    | |",
+        "          | |.-\"\"-.|",
+        "         ///`.::::.`\\",
+        "        ||| ::/  \\:: ;",
+        "        ||; ::\\__/:: ;",
+        "         \\\\\\ '::::' /",
+        "          `=':-..-'`"
+    };
+
+    char password_art[][80]={
+        " _______  _______  _______  _______           _______  _______  ______",  
+        "(  ____ )(  ___  )(  ____ \\(  ____ \\|\\     /|(  ___  )(  ____ )(  __  \\", 
+        "| (    )|| (   ) || (    \\/| (    \\/| )   ( || (   ) || (    )|| (  \\  )",
+        "| (____)|| (___) || (_____ | (_____ | | _ | || |   | || (____)|| |   ) |",
+        "|  _____)|  ___  |(_____  )(_____  )| |( )| || |   | ||     __)| |   | |",
+        "| (      | (   ) |      ) |      ) || || || || |   | || (\\ (   | |   ) |",
+        "| )      | )   ( |/\\____) |/\\____) || () () || (___) || ) \\ \\__| (__/  )",
+        "|/       |/     \\|\\_______)\\_______)(_______)(_______)|/   \\__/(______/"
+    };
+
+    attron(MAGENTA_COLORED_CELL);
+
+    for(int i=0 ; i<8 ; i++) {
+        mvprintw(1+i,COLUMN/2 - strlen(login[0])/2 , "%s",login[i]);
+    }
+
+    attroff(MAGENTA_COLORED_CELL);
+
+    attron(GREEN_COLORED_CELL);
+
+    for(int i=0 ; i<21 ; i++) {
+        mvprintw(ROW/4 +i,1,"%s",quill[i]);
+    }
+
+
+    attroff(GREEN_COLORED_CELL);
+
     attron(COLOR_PAIR(1));
 
     echo();
@@ -932,8 +1228,6 @@ int USER_LOGIN() {
 
     mvprintw(2*ROW/3+1, COLUMN/2 - 7,"###############");
 
-    move(2*ROW/3, COLUMN/2 -7);
-
     refresh();
 
     char USERNAME[100];
@@ -944,7 +1238,10 @@ int USER_LOGIN() {
 
     while (TRUE)  //check username
     {
-        
+        mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+        move(2*ROW/3, COLUMN/2 -7);
+
         getstr(USERNAME);
 
         if(strcmp(USERNAME,"r")==0 || strcmp(USERNAME,"R")==0) {
@@ -966,6 +1263,10 @@ int USER_LOGIN() {
             RESET_CURSOR_AND_COLORS_FOR_LOGIN_ERROR();
 
             curs_set(0);
+
+            mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+            move(2*ROW/3, COLUMN/2 -7);
 
             mvprintw(ROW/3 +3 ,COLUMN/2 -26,"Temporary Login Successful. Press a Key to Continue.");
 
@@ -1024,6 +1325,26 @@ int USER_LOGIN() {
 
     clear();
 
+    attroff(GOLD_COLORED_CELL);
+
+    attron(MAGENTA_COLORED_CELL);
+
+    for(int i=0 ; i<8 ; i++) {
+        mvprintw(1+i,COLUMN/2 - strlen(password_art[0])/2,"%s",password_art[i]);
+    }
+
+    attroff(MAGENTA_COLORED_CELL);
+
+    attron(GREEN_COLORED_CELL);
+
+    for(int i=0 ; i<10 ; i++) {
+        mvprintw(ROW/2 +i,1,"%s",lock[i]);
+    }
+
+    attroff(GREEN_COLORED_CELL);
+
+    attron(GOLD_COLORED_CELL);
+
     mvprintw(ROW/3,COLUMN/2 -23,"Enter Your Password. Press f if You Forgot it.");
 
     mvprintw(2*ROW/3+1, COLUMN/2 - 7,"###############");
@@ -1033,6 +1354,10 @@ int USER_LOGIN() {
     refresh();
 
     while(TRUE) {
+
+        mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+        move(2*ROW/3, COLUMN/2 -7);
 
         getstr(PASSWORD);
 
@@ -1069,6 +1394,10 @@ int USER_LOGIN() {
 
     curs_set(0);
 
+    mvprintw(2*ROW/3,COLUMN/2 -8,">");
+
+    move(2*ROW/3, COLUMN/2 -7);
+
     mvprintw(ROW/3 +3,COLUMN/2 -21 ,"Login Successful. Press a Key to Continue.");
 
     strcpy(GLOBAL_LOGGED_IN_USER,USERNAME);
@@ -1088,7 +1417,7 @@ void CLEAR_TEXT_FOR_LOGIN_ERRORS() {
 
     mvprintw(ROW/3+2 , COLUMN/2 -30 ,"                                                            ");
 
-    mvprintw(2*ROW/3 , COLUMN/2-55 , "                                                                                                             ");
+    mvprintw(2*ROW/3 , COLUMN/2-20 , "                                                           ");
 
     attroff(COLOR_PAIR(1));
 
@@ -2625,16 +2954,56 @@ void OPEN_GAME_LAUNCHER(int * OK_LAUNCH) {
         }
     }
 
+    char welcome[][100]={ 
+    " _       __     __                             __",
+    "| |     / /__  / /________  ____ ___  ___     / /",
+    "| | /| / / _ \\/ / ___/ __ \\/ __ \\__ \\/ _ \\   / / ",
+    "| |/ |/ /  __/ / /__/ /_/ / / / / / /  __/  /_/  ",
+    "|__/|__/\\___/_/\\___/\\____/_/ /_/ /_/\\___/  (_)   "
+    };
+
+    char exclamation[][10]={
+    " !!! ",
+    "!!:!!",
+    "!:::!",
+    "!:::!",
+    "!:::!",
+    "!:::!",
+    "!:::!",
+    "!:::!",
+    "!:::!",
+    "!:::!",
+    "!!:!!",
+    " !!! ",
+    "\0",
+    " !!! ",
+    "!!:!!",
+    " !!! "
+    };
+
+    for(int i=0 ; i<5 ; i++) {
+        mvprintw(ROW/3+i , COLUMN/2-strlen(welcome[0])/2,"%s",welcome[i]);
+    }
+
+    for(int i=0 ; i<16 ; i++) {
+        mvprintw(ROW/3+i, COLUMN/5,"%s",exclamation[i]);
+        mvprintw(ROW/3+i,4*COLUMN/5,"%s",exclamation[i]);
+    }
+
     mvprintw(ROW/2, COLUMN/2 -9,"Launching Game...");
 
     if(ROW>=38 && COLUMN>=144) {
+        attrset(GREEN_W_BLUE_BG);
         mvprintw(ROW/2 +1 , COLUMN/2 -24,"Your Screen Size is OK; Press a Key to Continue.");
-        getch();
+        attrset(BLUE_SCREEN);
+        refresh(); getch();
     }
 
     else {
+        attrset(RED_W_BLUE_BG);
         mvprintw(ROW/2+1, COLUMN/2 -39,"Your Terminal Size is Too Small; Change it and try again. Press a key to exit.");
-        getch();
+        attrset(BLUE_SCREEN);
+        refresh();  getch();
         *OK_LAUNCH=FALSE;
     }
 
@@ -8035,6 +8404,14 @@ void START_GAME(int* OK_LAUNCH) {
 
         init_pair(12,COLOR_WHITE,COLOR_BLUE);
 
+        init_pair(13,COLOR_MAGENTA,COLOR_BLACK);
+
+        init_pair(14,COLOR_GREEN,COLOR_BLUE);
+
+        init_pair(15,COLOR_RED,COLOR_BLUE);
+
+        //init_pair(14,COLOR_RED,COLOR_BLUE);
+
         //add colors later
     }
 
@@ -9190,6 +9567,7 @@ void HANDLE_HP_REGEN() {
 
             if(GLOBAL_EFFECTS_STORAGE.H>0) {
                 GLOBAL_INVENTORY_AND_COORDINATES.HP+=2;
+                GLOBAL_EFFECTS_STORAGE.H--;
             }
 
             if(GLOBAL_INVENTORY_AND_COORDINATES.HP>GLOBAL_MAX_HP) {
@@ -9209,9 +9587,9 @@ void HANDLE_EFFECTS_USAGE() {
     if(GLOBAL_EFFECTS_STORAGE.D>0) {
         GLOBAL_EFFECTS_STORAGE.D--;
     }
-    if(GLOBAL_EFFECTS_STORAGE.H>0) {
+    /*if(GLOBAL_EFFECTS_STORAGE.H>0) {
         GLOBAL_EFFECTS_STORAGE.H--;
-    }
+    }*/
     if(GLOBAL_EFFECTS_STORAGE.S>0) {
         GLOBAL_EFFECTS_STORAGE.S--;
     }
