@@ -14,6 +14,7 @@ sudo apt install libncursesw5-dev libsdl2-dev libsdl2-mixer-dev
 ```
 
 - Running the Game
+
 To run the game, you can either use the provided executable file `game.out` or compile the source code yourself.
 
 You can compile the code with the following command: 
@@ -25,7 +26,9 @@ Run the game's executable with this command:
 ./game.out
 ```
 
-- Controls: Press 'E' in menus to accept items. Press 'E' in game for the food menu. Press 'P' for the spells menu. Press 'E' for the weapons menu. 
+- Controls
+
+Press 'E' in menus to accept items. Press 'E' in game for the food menu. Press 'P' for the spells menu. Press 'E' for the weapons menu. 
 Movement can be done in eight directions (including diagonal directions). Movement is with the numpad:
               up
             7 8 9
