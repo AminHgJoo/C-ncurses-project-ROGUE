@@ -30,6 +30,7 @@ The project runs under the C language's ncurses library in linux.
 
   Press 'E' in menus to accept items. Press 'E' in game for the food menu. Press 'P' for the spells menu. Press 'E' for the weapons menu. 
   Movement can be done in eight directions (including diagonal directions). Movement is with the numpad:
+  
                 up
               7 8 9
          left 4 5 6 right
